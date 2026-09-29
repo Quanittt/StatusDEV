@@ -1,0 +1,14 @@
+{
+  "name": "statusdev",
+  "private": true,
+  "workspaces": [
+    "api",
+    "web",
+    "shared"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=api",
+    "dev:web": "npm run dev --workspace=web",
+    "build:shared": "npm run build --workspace=shared"
+  }
+}

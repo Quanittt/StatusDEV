@@ -1,0 +1,34 @@
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  text-align: left;
+}
+
+.status-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.status-form input,
+.status-form select {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.5rem;
+}
+
+.status-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-list li {
+  padding: 0.5rem;
+  border: 1px solid #333;
+  border-radius: 6px;
+}
