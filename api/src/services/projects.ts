@@ -18,6 +18,7 @@ import {
 import { db } from "../db/client.js";
 import { clients, milestones, projects, user } from "../db/schema.js";
 import { BadRequestError, NotFoundError, PlanLimitError } from "../errors.js";
+import { MILESTONE_TEMPLATES } from "./milestone-templates.js";
 
 const FREE_ACTIVE_PROJECTS_LIMIT = 2;
 
@@ -80,10 +81,21 @@ export async function createProject(
     const status = input.status ?? "active";
     if (status === "active") await assertActiveLimit(tx, ownerId, owner?.plan);
 
+    const { template, ...fields } = input;
     const [created] = await tx
       .insert(projects)
-      .values({ ...input, status, ownerId })
+      .values({ ...fields, status, ownerId })
       .returning();
+
+    if (template) {
+      await tx.insert(milestones).values(
+        MILESTONE_TEMPLATES[template].map((title, index) => ({
+          projectId: created.id,
+          title,
+          position: index + 1,
+        })),
+      );
+    }
     return created;
   });
 }

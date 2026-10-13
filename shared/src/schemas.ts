@@ -16,14 +16,20 @@ export const UpdateClientSchema = CreateClientSchema.partial().refine(
 
 export const ProjectStatusSchema = z.enum(["active", "paused", "done", "archived"]);
 
+export const ProjectTemplateSchema = z.enum(["website", "branding", "smm"]);
+
 export const CreateProjectSchema = z.object({
   clientId: z.string().uuid(),
   title: trimmed(200),
   description: optionalText(5000).optional(),
   status: ProjectStatusSchema.optional(),
   deadline: z.coerce.date().nullable().optional(),
+  template: ProjectTemplateSchema.optional(),
 });
-export const UpdateProjectSchema = CreateProjectSchema.omit({ clientId: true })
+export const UpdateProjectSchema = CreateProjectSchema.omit({
+  clientId: true,
+  template: true,
+})
   .partial()
   .refine((v) => Object.keys(v).length > 0, {
     message: "Потрібно передати хоча б одне поле",
@@ -31,6 +37,7 @@ export const UpdateProjectSchema = CreateProjectSchema.omit({ clientId: true })
 
 export type CreateClientInput = z.infer<typeof CreateClientSchema>;
 export type UpdateClientInput = z.infer<typeof UpdateClientSchema>;
+export type ProjectTemplate = z.infer<typeof ProjectTemplateSchema>;
 export type ProjectStatus = z.infer<typeof ProjectStatusSchema>;
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
 export type UpdateProjectInput = z.infer<typeof UpdateProjectSchema>;

@@ -15,7 +15,8 @@ body:json {
     "clientId": "{{clientId}}",
     "title": "Сайт для Acme",
     "description": "Лендінг + адмінка",
-    "deadline": "2026-12-31"
+    "deadline": "2026-12-31",
+    "template": "website"
   }
 }
 
@@ -24,5 +25,5 @@ script:post-response {
 }
 
 docs {
-  Free: максимум 2 активних проєкти, третій дає 402 PLAN_LIMIT. Зберігає id у projectId.
+  Free: максимум 2 активних проєкти, третій дає 402 PLAN_LIMIT. template (необов'язково): website | branding | smm створює типові етапи. Зберігає id у projectId.
 }
