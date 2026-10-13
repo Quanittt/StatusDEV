@@ -33,6 +33,14 @@ export async function getProjectForOwner(projectId: string, ownerId: string) {
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
+// Будь-яка зміна етапів оновлює updated_at проєкту: за ним портал показує «оновлено N днів тому».
+export async function touchProject(tx: Tx, projectId: string) {
+  await tx
+    .update(projects)
+    .set({ updatedAt: sql`now()` })
+    .where(eq(projects.id, projectId));
+}
+
 // Рахуються тільки активні проєкти: paused/done/archived у ліміт не входять.
 async function assertActiveLimit(
   tx: Tx,
@@ -205,6 +213,7 @@ export async function createMilestone(
       .insert(milestones)
       .values({ ...input, projectId, position: (last ?? 0) + 1 })
       .returning();
+    await touchProject(tx, projectId);
     return created;
   });
 }
@@ -248,6 +257,7 @@ export async function updateMilestone(
       .set({ ...input, ...(completedAt !== undefined && { completedAt }) })
       .where(eq(milestones.id, milestoneId))
       .returning();
+    await touchProject(tx, updated.projectId);
     return updated;
   });
 }
@@ -289,6 +299,8 @@ export async function reorderMilestones(
         .where(eq(milestones.id, id));
     }
 
+    await touchProject(tx, projectId);
+
     return tx
       .select()
       .from(milestones)
@@ -309,6 +321,7 @@ export async function deleteMilestone(milestoneId: string, ownerId: string) {
     if (!row) throw new NotFoundError("Етап не знайдено");
 
     await tx.delete(milestones).where(eq(milestones.id, milestoneId));
+    await touchProject(tx, row.projectId);
 
     await tx.execute(sql`
       update ${milestones} m
