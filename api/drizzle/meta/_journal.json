@@ -15,6 +15,13 @@
       "when": 1791878739456,
       "tag": "0001_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791899455413,
+      "tag": "0002_early_whiplash",
+      "breakpoints": true
     }
   ]
 }
