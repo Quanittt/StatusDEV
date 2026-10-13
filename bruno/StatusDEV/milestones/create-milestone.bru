@@ -1,0 +1,27 @@
+meta {
+  name: Create milestone
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/projects/{{projectId}}/milestones
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "Дизайн макетів",
+    "description": "Головна + каталог",
+    "dueDate": "2026-11-15"
+  }
+}
+
+script:post-response {
+  bru.setVar("milestoneId", res.body.id);
+}
+
+docs {
+  Новий етап додається в кінець списку (position = max + 1). Зберігає id у milestoneId.
+}

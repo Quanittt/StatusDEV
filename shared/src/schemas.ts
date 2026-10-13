@@ -34,3 +34,14 @@ export type UpdateClientInput = z.infer<typeof UpdateClientSchema>;
 export type ProjectStatus = z.infer<typeof ProjectStatusSchema>;
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
 export type UpdateProjectInput = z.infer<typeof UpdateProjectSchema>;
+
+export const MilestoneStatusSchema = z.enum(["todo", "in_progress", "done"]);
+
+export const CreateMilestoneSchema = z.object({
+  title: trimmed(200),
+  description: optionalText(5000).optional(),
+  dueDate: z.coerce.date().nullable().optional(),
+});
+
+export type MilestoneStatus = z.infer<typeof MilestoneStatusSchema>;
+export type CreateMilestoneInput = z.infer<typeof CreateMilestoneSchema>;

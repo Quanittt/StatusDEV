@@ -1,9 +1,19 @@
 import type {
+  CreateMilestoneInput,
   CreateProjectInput,
   ProjectStatus,
   UpdateProjectInput,
 } from "@statusdev/shared";
-import { and, asc, count, desc, eq, getTableColumns, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  max,
+  sql,
+} from "drizzle-orm";
 import { db } from "../db/client.js";
 import { clients, milestones, projects, user } from "../db/schema.js";
 import { NotFoundError, PlanLimitError } from "../errors.js";
@@ -169,4 +179,31 @@ export async function archiveProject(projectId: string, ownerId: string) {
     .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)))
     .returning({ id: projects.id });
   if (!archived) throw new NotFoundError("Проєкт не знайдено");
+}
+
+export async function createMilestone(
+  projectId: string,
+  ownerId: string,
+  input: CreateMilestoneInput,
+) {
+  return db.transaction(async (tx) => {
+    // Блокуємо проєкт, щоб паралельні запити не отримали однакову position.
+    const [project] = await tx
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)))
+      .for("update");
+    if (!project) throw new NotFoundError("Проєкт не знайдено");
+
+    const [{ last }] = await tx
+      .select({ last: max(milestones.position) })
+      .from(milestones)
+      .where(eq(milestones.projectId, projectId));
+
+    const [created] = await tx
+      .insert(milestones)
+      .values({ ...input, projectId, position: (last ?? 0) + 1 })
+      .returning();
+    return created;
+  });
 }

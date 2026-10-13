@@ -1,4 +1,5 @@
 import {
+  CreateMilestoneSchema,
   CreateProjectSchema,
   ProjectStatusSchema,
   UpdateProjectSchema,
@@ -7,6 +8,7 @@ import { z } from "zod";
 import type { FastifyInstance } from "fastify";
 import {
   archiveProject,
+  createMilestone,
   createProject,
   getProjectDetailsForOwner,
   listProjectsForOwner,
@@ -33,6 +35,13 @@ export async function projectRoutes(app: FastifyInstance) {
   app.post("/projects", async (req, reply) => {
     const input = CreateProjectSchema.parse(req.body);
     const created = await createProject(req.user!.id, input);
+    return reply.status(201).send(created);
+  });
+
+  app.post("/projects/:id/milestones", async (req, reply) => {
+    const { id } = IdParamsSchema.parse(req.params);
+    const input = CreateMilestoneSchema.parse(req.body);
+    const created = await createMilestone(id, req.user!.id, input);
     return reply.status(201).send(created);
   });
 
