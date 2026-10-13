@@ -6,6 +6,7 @@ import { env } from "./env.js";
 import { registerErrorHandler } from "./plugins/error-handler.js";
 import { requireOwnerPlugin } from "./plugins/require-owner.js";
 import { authRoutes } from "./routes/auth.js";
+import { clientRoutes } from "./routes/clients.js";
 import { meRoutes } from "./routes/me.js";
 
 export function buildApp() {
@@ -18,6 +19,7 @@ export function buildApp() {
   // Парсер тіла відключений тільки всередині цього плагіна (encapsulation).
   app.register(authRoutes);
   app.register(meRoutes);
+  app.register(clientRoutes);
 
   app.get("/health", async () => {
     await db.execute(sql`select 1`);
