@@ -8,6 +8,7 @@ import { requireOwnerPlugin } from "./plugins/require-owner.js";
 import { authRoutes } from "./routes/auth.js";
 import { clientRoutes } from "./routes/clients.js";
 import { meRoutes } from "./routes/me.js";
+import { projectRoutes } from "./routes/projects.js";
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -20,6 +21,7 @@ export function buildApp() {
   app.register(authRoutes);
   app.register(meRoutes);
   app.register(clientRoutes);
+  app.register(projectRoutes);
 
   app.get("/health", async () => {
     await db.execute(sql`select 1`);

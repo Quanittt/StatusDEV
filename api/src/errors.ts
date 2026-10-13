@@ -29,6 +29,6 @@ export class ConflictError extends AppError {
 
 export class PlanLimitError extends AppError {
   constructor(message = "Ліміт тарифу вичерпано") {
-    super(403, "PLAN_LIMIT", message);
+    super(402, "PLAN_LIMIT", message);
   }
 }
