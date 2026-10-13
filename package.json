@@ -9,6 +9,7 @@
   "scripts": {
     "dev:api": "npm run dev --workspace=api",
     "dev:web": "npm run dev --workspace=web",
-    "build:shared": "npm run build --workspace=shared"
+    "build:shared": "npm run build --workspace=shared",
+    "test": "npm test --workspace=api"
   }
 }

@@ -12,8 +12,8 @@ import { meRoutes } from "./routes/me.js";
 import { milestoneRoutes } from "./routes/milestones.js";
 import { projectRoutes } from "./routes/projects.js";
 
-export function buildApp() {
-  const app = Fastify({ logger: true });
+export function buildApp({ logger = true }: { logger?: boolean } = {}) {
+  const app = Fastify({ logger });
 
   registerErrorHandler(app);
   app.register(cors, { origin: env.WEB_URL, credentials: true });
