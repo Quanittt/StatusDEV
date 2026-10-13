@@ -1,0 +1,28 @@
+meta {
+  name: Create project
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/projects
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "clientId": "{{clientId}}",
+    "title": "Сайт для Acme",
+    "description": "Лендінг + адмінка",
+    "deadline": "2026-12-31"
+  }
+}
+
+script:post-response {
+  bru.setVar("projectId", res.body.id);
+}
+
+docs {
+  Free: максимум 2 активних проєкти, третій дає 402 PLAN_LIMIT. Зберігає id у projectId.
+}

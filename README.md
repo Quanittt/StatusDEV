@@ -32,3 +32,7 @@
    npm run dev:api   # http://localhost:3001
    npm run dev:web   # http://localhost:5173
    ```
+
+## Bruno-колекція запитів
+
+У `bruno/StatusDEV/` лежить колекція для [Bruno](https://www.usebruno.com/): відкрий її (Open Collection), вибери оточення `local` і запускай запити. Спершу `auth/Sign up` (або `Sign in`), далі решта — Bruno зберігає cookie сесії сам. `Create client` і `Create project` записують `clientId` та `projectId` у змінні, тож наступні запити працюють одним кліком.

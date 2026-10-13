@@ -1,0 +1,18 @@
+meta {
+  name: Update project
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/projects/{{projectId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "Сайт для Acme v2",
+    "status": "paused"
+  }
+}

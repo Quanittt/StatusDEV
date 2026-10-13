@@ -1,0 +1,15 @@
+meta {
+  name: Archive project
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/projects/{{projectId}}
+  body: none
+  auth: none
+}
+
+docs {
+  Не видаляє, а ставить status = archived (204).
+}

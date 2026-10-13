@@ -1,0 +1,17 @@
+meta {
+  name: Update client
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/clients/{{clientId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Acme Ltd"
+  }
+}

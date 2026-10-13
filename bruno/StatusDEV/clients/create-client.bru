@@ -1,0 +1,28 @@
+meta {
+  name: Create client
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/clients
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Acme",
+    "email": "hello@acme.com",
+    "phone": "+380501234567",
+    "notes": "Перший клієнт"
+  }
+}
+
+script:post-response {
+  bru.setVar("clientId", res.body.id);
+}
+
+docs {
+  Зберігає id у змінну clientId для наступних запитів.
+}

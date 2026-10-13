@@ -1,0 +1,15 @@
+meta {
+  name: Delete client
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/clients/{{clientId}}
+  body: none
+  auth: none
+}
+
+docs {
+  204; 409, якщо у клієнта є проєкти.
+}
