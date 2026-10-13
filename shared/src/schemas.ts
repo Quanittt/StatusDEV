@@ -41,7 +41,16 @@ export const CreateMilestoneSchema = z.object({
   title: trimmed(200),
   description: optionalText(5000).optional(),
   dueDate: z.coerce.date().nullable().optional(),
+  clientAction: optionalText(1000).optional(),
 });
+export const UpdateMilestoneSchema = CreateMilestoneSchema.extend({
+  status: MilestoneStatusSchema,
+})
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, {
+    message: "Потрібно передати хоча б одне поле",
+  });
 
 export type MilestoneStatus = z.infer<typeof MilestoneStatusSchema>;
 export type CreateMilestoneInput = z.infer<typeof CreateMilestoneSchema>;
+export type UpdateMilestoneInput = z.infer<typeof UpdateMilestoneSchema>;

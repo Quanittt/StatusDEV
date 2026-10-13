@@ -83,6 +83,8 @@ export const milestones = pgTable(
     status: milestoneStatus("status").default("todo").notNull(),
     position: integer("position").notNull(),
     dueDate: timestamp("due_date"),
+    clientAction: text("client_action"),
+    completedAt: timestamp("completed_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

@@ -8,6 +8,7 @@ import { requireOwnerPlugin } from "./plugins/require-owner.js";
 import { authRoutes } from "./routes/auth.js";
 import { clientRoutes } from "./routes/clients.js";
 import { meRoutes } from "./routes/me.js";
+import { milestoneRoutes } from "./routes/milestones.js";
 import { projectRoutes } from "./routes/projects.js";
 
 export function buildApp() {
@@ -22,6 +23,7 @@ export function buildApp() {
   app.register(meRoutes);
   app.register(clientRoutes);
   app.register(projectRoutes);
+  app.register(milestoneRoutes);
 
   app.get("/health", async () => {
     await db.execute(sql`select 1`);

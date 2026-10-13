@@ -2,6 +2,7 @@ import type {
   CreateMilestoneInput,
   CreateProjectInput,
   ProjectStatus,
+  UpdateMilestoneInput,
   UpdateProjectInput,
 } from "@statusdev/shared";
 import {
@@ -205,5 +206,48 @@ export async function createMilestone(
       .values({ ...input, projectId, position: (last ?? 0) + 1 })
       .returning();
     return created;
+  });
+}
+
+// Доступ до етапу йде через власника проєкту; чужий етап — 404, як і чужий проєкт.
+export async function getMilestoneForOwner(
+  milestoneId: string,
+  ownerId: string,
+) {
+  const [row] = await db
+    .select({ milestone: milestones })
+    .from(milestones)
+    .innerJoin(projects, eq(projects.id, milestones.projectId))
+    .where(and(eq(milestones.id, milestoneId), eq(projects.ownerId, ownerId)));
+  if (!row) throw new NotFoundError("Етап не знайдено");
+  return row.milestone;
+}
+
+export async function updateMilestone(
+  milestoneId: string,
+  ownerId: string,
+  input: UpdateMilestoneInput,
+) {
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({ status: milestones.status })
+      .from(milestones)
+      .innerJoin(projects, eq(projects.id, milestones.projectId))
+      .where(and(eq(milestones.id, milestoneId), eq(projects.ownerId, ownerId)))
+      .for("update", { of: milestones });
+    if (!row) throw new NotFoundError("Етап не знайдено");
+
+    // completed_at ставимо при вході в done і чистимо при виході; done -> done не чіпає.
+    let completedAt: Date | null | undefined;
+    if (input.status && input.status !== row.status) {
+      completedAt = input.status === "done" ? new Date() : null;
+    }
+
+    const [updated] = await tx
+      .update(milestones)
+      .set({ ...input, ...(completedAt !== undefined && { completedAt }) })
+      .where(eq(milestones.id, milestoneId))
+      .returning();
+    return updated;
   });
 }

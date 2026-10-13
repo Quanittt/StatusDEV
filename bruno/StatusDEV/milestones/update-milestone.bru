@@ -1,0 +1,22 @@
+meta {
+  name: Update milestone
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{baseUrl}}/milestones/{{milestoneId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "status": "done",
+    "clientAction": "Надіслати логотип"
+  }
+}
+
+docs {
+  Поля: title, description, status (todo|in_progress|done), dueDate, clientAction. При переході в done ставиться completedAt, при виході з done очищається.
+}
