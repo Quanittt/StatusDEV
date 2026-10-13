@@ -1,5 +1,5 @@
 import type { CreateProjectInput, ProjectStatus } from "@statusdev/shared";
-import { and, count, desc, eq, getTableColumns, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, getTableColumns, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { clients, milestones, projects, user } from "../db/schema.js";
 import { NotFoundError, PlanLimitError } from "../errors.js";
@@ -92,4 +92,28 @@ export async function listProjectsForOwner(
     progress:
       r.milestonesTotal === 0 ? 0 : r.milestonesDone / r.milestonesTotal,
   }));
+}
+
+export async function getProjectDetailsForOwner(
+  projectId: string,
+  ownerId: string,
+) {
+  const project = await getProjectForOwner(projectId, ownerId);
+
+  const [client] = await db
+    .select({ name: clients.name })
+    .from(clients)
+    .where(eq(clients.id, project.clientId));
+
+  const projectMilestones = await db
+    .select()
+    .from(milestones)
+    .where(eq(milestones.projectId, project.id))
+    .orderBy(asc(milestones.position), asc(milestones.createdAt));
+
+  return {
+    ...project,
+    clientName: client?.name ?? null,
+    milestones: projectMilestones,
+  };
 }
