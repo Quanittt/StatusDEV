@@ -48,3 +48,40 @@ export async function createUser(
 export function as(user: TestUser) {
   return { cookie: user.cookie, origin: "http://localhost:5173" };
 }
+
+// Скорочення для запитів від імені користувача: api.post("/clients", { name: "A" }).
+export function api(app: FastifyInstance, user: TestUser) {
+  const call =
+    (method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE") =>
+    (url: string, payload?: object) =>
+      app.inject({ method, url, headers: as(user), payload });
+  return {
+    get: call("GET"),
+    post: call("POST"),
+    patch: call("PATCH"),
+    put: call("PUT"),
+    del: call("DELETE"),
+  };
+}
+
+export type Api = ReturnType<typeof api>;
+
+export async function makeClient(a: Api, name = "Acme"): Promise<string> {
+  return (await a.post("/clients", { name })).json().id;
+}
+
+export async function makeProject(
+  a: Api,
+  clientId: string,
+  extra: object = {},
+): Promise<string> {
+  const res = await a.post("/projects", { clientId, title: "P", ...extra });
+  if (res.statusCode !== 201) throw new Error(`project: ${res.body}`);
+  return res.json().id;
+}
+
+export async function makeMilestone(a: Api, projectId: string, title = "M") {
+  const res = await a.post(`/projects/${projectId}/milestones`, { title });
+  if (res.statusCode !== 201) throw new Error(`milestone: ${res.body}`);
+  return res.json() as { id: string; position: number };
+}
