@@ -1,0 +1,21 @@
+meta {
+  name: Reorder milestones
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/projects/{{projectId}}/milestones/order
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "ids": ["{{milestoneId}}"]
+  }
+}
+
+docs {
+  ids має містити ВСІ етапи проєкту рівно по одному разу в бажаному порядку. Інакше 400. Підстав свої id замість прикладу.
+}

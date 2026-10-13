@@ -9,6 +9,12 @@ export class AppError extends Error {
   }
 }
 
+export class BadRequestError extends AppError {
+  constructor(message = "Некоректний запит") {
+    super(400, "BAD_REQUEST", message);
+  }
+}
+
 export class UnauthorizedError extends AppError {
   constructor(message = "Потрібна авторизація") {
     super(401, "UNAUTHORIZED", message);

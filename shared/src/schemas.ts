@@ -54,3 +54,8 @@ export const UpdateMilestoneSchema = CreateMilestoneSchema.extend({
 export type MilestoneStatus = z.infer<typeof MilestoneStatusSchema>;
 export type CreateMilestoneInput = z.infer<typeof CreateMilestoneSchema>;
 export type UpdateMilestoneInput = z.infer<typeof UpdateMilestoneSchema>;
+
+export const ReorderMilestonesSchema = z.object({
+  ids: z.array(z.string().uuid()),
+});
+export type ReorderMilestonesInput = z.infer<typeof ReorderMilestonesSchema>;

@@ -1,5 +1,6 @@
 import {
   CreateMilestoneSchema,
+  ReorderMilestonesSchema,
   CreateProjectSchema,
   ProjectStatusSchema,
   UpdateProjectSchema,
@@ -12,6 +13,7 @@ import {
   createProject,
   getProjectDetailsForOwner,
   listProjectsForOwner,
+  reorderMilestones,
   updateProject,
 } from "../services/projects.js";
 
@@ -43,6 +45,12 @@ export async function projectRoutes(app: FastifyInstance) {
     const input = CreateMilestoneSchema.parse(req.body);
     const created = await createMilestone(id, req.user!.id, input);
     return reply.status(201).send(created);
+  });
+
+  app.put("/projects/:id/milestones/order", async (req) => {
+    const { id } = IdParamsSchema.parse(req.params);
+    const { ids } = ReorderMilestonesSchema.parse(req.body);
+    return reorderMilestones(id, req.user!.id, ids);
   });
 
   app.patch("/projects/:id", async (req) => {

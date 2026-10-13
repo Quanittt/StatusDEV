@@ -17,7 +17,7 @@ import {
 } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { clients, milestones, projects, user } from "../db/schema.js";
-import { NotFoundError, PlanLimitError } from "../errors.js";
+import { BadRequestError, NotFoundError, PlanLimitError } from "../errors.js";
 
 const FREE_ACTIVE_PROJECTS_LIMIT = 2;
 
@@ -249,5 +249,50 @@ export async function updateMilestone(
       .where(eq(milestones.id, milestoneId))
       .returning();
     return updated;
+  });
+}
+
+export async function reorderMilestones(
+  projectId: string,
+  ownerId: string,
+  ids: string[],
+) {
+  return db.transaction(async (tx) => {
+    const [project] = await tx
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)))
+      .for("update");
+    if (!project) throw new NotFoundError("Проєкт не знайдено");
+
+    const existing = await tx
+      .select({ id: milestones.id })
+      .from(milestones)
+      .where(eq(milestones.projectId, projectId));
+
+    // Список має містити всі етапи проєкту рівно по одному разу: без чужих, зайвих і дублів.
+    const existingIds = new Set(existing.map((m) => m.id));
+    const valid =
+      ids.length === existingIds.size &&
+      new Set(ids).size === ids.length &&
+      ids.every((id) => existingIds.has(id));
+    if (!valid) {
+      throw new BadRequestError(
+        "ids має містити всі етапи цього проєкту по одному разу",
+      );
+    }
+
+    for (const [index, id] of ids.entries()) {
+      await tx
+        .update(milestones)
+        .set({ position: index + 1 })
+        .where(eq(milestones.id, id));
+    }
+
+    return tx
+      .select()
+      .from(milestones)
+      .where(eq(milestones.projectId, projectId))
+      .orderBy(asc(milestones.position));
   });
 }
