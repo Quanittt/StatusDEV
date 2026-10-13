@@ -296,3 +296,29 @@ export async function reorderMilestones(
       .orderBy(asc(milestones.position));
   });
 }
+
+export async function deleteMilestone(milestoneId: string, ownerId: string) {
+  await db.transaction(async (tx) => {
+    // Блокуємо проєкт, щоб перенумерація не змішалась із паралельним додаванням.
+    const [row] = await tx
+      .select({ projectId: milestones.projectId })
+      .from(milestones)
+      .innerJoin(projects, eq(projects.id, milestones.projectId))
+      .where(and(eq(milestones.id, milestoneId), eq(projects.ownerId, ownerId)))
+      .for("update", { of: projects });
+    if (!row) throw new NotFoundError("Етап не знайдено");
+
+    await tx.delete(milestones).where(eq(milestones.id, milestoneId));
+
+    await tx.execute(sql`
+      update ${milestones} m
+      set position = r.rn
+      from (
+        select id, row_number() over (order by position, created_at) as rn
+        from ${milestones}
+        where project_id = ${row.projectId}
+      ) r
+      where m.id = r.id and m.position <> r.rn
+    `);
+  });
+}

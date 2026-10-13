@@ -1,7 +1,7 @@
 import { UpdateMilestoneSchema } from "@statusdev/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { updateMilestone } from "../services/projects.js";
+import { deleteMilestone, updateMilestone } from "../services/projects.js";
 
 const IdParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -12,5 +12,11 @@ export async function milestoneRoutes(app: FastifyInstance) {
     const { id } = IdParamsSchema.parse(req.params);
     const input = UpdateMilestoneSchema.parse(req.body);
     return updateMilestone(id, req.user!.id, input);
+  });
+
+  app.delete("/milestones/:id", async (req, reply) => {
+    const { id } = IdParamsSchema.parse(req.params);
+    await deleteMilestone(id, req.user!.id);
+    return reply.status(204).send();
   });
 }
