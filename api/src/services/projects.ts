@@ -1,4 +1,8 @@
-import type { CreateProjectInput, ProjectStatus } from "@statusdev/shared";
+import type {
+  CreateProjectInput,
+  ProjectStatus,
+  UpdateProjectInput,
+} from "@statusdev/shared";
 import { and, asc, count, desc, eq, getTableColumns, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { clients, milestones, projects, user } from "../db/schema.js";
@@ -14,6 +18,26 @@ export async function getProjectForOwner(projectId: string, ownerId: string) {
     .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)));
   if (!project) throw new NotFoundError("Проєкт не знайдено");
   return project;
+}
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+// Рахуються тільки активні проєкти: paused/done/archived у ліміт не входять.
+async function assertActiveLimit(
+  tx: Tx,
+  ownerId: string,
+  plan: string | null | undefined,
+) {
+  if ((plan ?? "free") !== "free") return;
+  const [{ active }] = await tx
+    .select({ active: count() })
+    .from(projects)
+    .where(and(eq(projects.ownerId, ownerId), eq(projects.status, "active")));
+  if (active >= FREE_ACTIVE_PROJECTS_LIMIT) {
+    throw new PlanLimitError(
+      `На тарифі Free можна мати не більше ${FREE_ACTIVE_PROJECTS_LIMIT} активних проєктів`,
+    );
+  }
 }
 
 export async function createProject(
@@ -35,19 +59,7 @@ export async function createProject(
     if (!client) throw new NotFoundError("Клієнта не знайдено");
 
     const status = input.status ?? "active";
-    if (status === "active" && (owner?.plan ?? "free") === "free") {
-      const [{ active }] = await tx
-        .select({ active: count() })
-        .from(projects)
-        .where(
-          and(eq(projects.ownerId, ownerId), eq(projects.status, "active")),
-        );
-      if (active >= FREE_ACTIVE_PROJECTS_LIMIT) {
-        throw new PlanLimitError(
-          `На тарифі Free можна мати не більше ${FREE_ACTIVE_PROJECTS_LIMIT} активних проєктів`,
-        );
-      }
-    }
+    if (status === "active") await assertActiveLimit(tx, ownerId, owner?.plan);
 
     const [created] = await tx
       .insert(projects)
@@ -116,4 +128,45 @@ export async function getProjectDetailsForOwner(
     clientName: client?.name ?? null,
     milestones: projectMilestones,
   };
+}
+
+export async function updateProject(
+  projectId: string,
+  ownerId: string,
+  input: UpdateProjectInput,
+) {
+  return db.transaction(async (tx) => {
+    const [owner] = await tx
+      .select({ plan: user.plan })
+      .from(user)
+      .where(eq(user.id, ownerId))
+      .for("update");
+
+    const [current] = await tx
+      .select({ status: projects.status })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)));
+    if (!current) throw new NotFoundError("Проєкт не знайдено");
+
+    // Повернення в active займає місце в ліміті так само, як створення.
+    if (input.status === "active" && current.status !== "active") {
+      await assertActiveLimit(tx, ownerId, owner?.plan);
+    }
+
+    const [updated] = await tx
+      .update(projects)
+      .set(input)
+      .where(eq(projects.id, projectId))
+      .returning();
+    return updated;
+  });
+}
+
+export async function archiveProject(projectId: string, ownerId: string) {
+  const [archived] = await db
+    .update(projects)
+    .set({ status: "archived" })
+    .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)))
+    .returning({ id: projects.id });
+  if (!archived) throw new NotFoundError("Проєкт не знайдено");
 }
