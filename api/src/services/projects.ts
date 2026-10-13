@@ -1,7 +1,7 @@
-import type { CreateProjectInput } from "@statusdev/shared";
-import { and, count, eq } from "drizzle-orm";
+import type { CreateProjectInput, ProjectStatus } from "@statusdev/shared";
+import { and, count, desc, eq, getTableColumns, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { clients, projects, user } from "../db/schema.js";
+import { clients, milestones, projects, user } from "../db/schema.js";
 import { NotFoundError, PlanLimitError } from "../errors.js";
 
 const FREE_ACTIVE_PROJECTS_LIMIT = 2;
@@ -16,7 +16,10 @@ export async function getProjectForOwner(projectId: string, ownerId: string) {
   return project;
 }
 
-export async function createProject(ownerId: string, input: CreateProjectInput) {
+export async function createProject(
+  ownerId: string,
+  input: CreateProjectInput,
+) {
   return db.transaction(async (tx) => {
     // Блокуємо рядок власника, щоб два паралельні запити не обійшли ліміт.
     const [owner] = await tx
@@ -36,7 +39,9 @@ export async function createProject(ownerId: string, input: CreateProjectInput) 
       const [{ active }] = await tx
         .select({ active: count() })
         .from(projects)
-        .where(and(eq(projects.ownerId, ownerId), eq(projects.status, "active")));
+        .where(
+          and(eq(projects.ownerId, ownerId), eq(projects.status, "active")),
+        );
       if (active >= FREE_ACTIVE_PROJECTS_LIMIT) {
         throw new PlanLimitError(
           `На тарифі Free можна мати не більше ${FREE_ACTIVE_PROJECTS_LIMIT} активних проєктів`,
@@ -50,4 +55,41 @@ export async function createProject(ownerId: string, input: CreateProjectInput) 
       .returning();
     return created;
   });
+}
+
+// Один запит: назва клієнта через join, прогрес рахується в самій базі.
+export async function listProjectsForOwner(
+  ownerId: string,
+  status?: ProjectStatus,
+) {
+  const totalMilestones = count(milestones.id);
+  const doneMilestones =
+    sql<number>`count(${milestones.id}) filter (where ${milestones.status} = 'done')`.mapWith(
+      Number,
+    );
+
+  const rows = await db
+    .select({
+      ...getTableColumns(projects),
+      clientName: clients.name,
+      milestonesTotal: totalMilestones,
+      milestonesDone: doneMilestones,
+    })
+    .from(projects)
+    .innerJoin(clients, eq(clients.id, projects.clientId))
+    .leftJoin(milestones, eq(milestones.projectId, projects.id))
+    .where(
+      and(
+        eq(projects.ownerId, ownerId),
+        status ? eq(projects.status, status) : undefined,
+      ),
+    )
+    .groupBy(projects.id, clients.name)
+    .orderBy(desc(projects.createdAt));
+
+  return rows.map((r) => ({
+    ...r,
+    progress:
+      r.milestonesTotal === 0 ? 0 : r.milestonesDone / r.milestonesTotal,
+  }));
 }

@@ -1,9 +1,17 @@
-import { CreateProjectSchema } from "@statusdev/shared";
+import { CreateProjectSchema, ProjectStatusSchema } from "@statusdev/shared";
+import { z } from "zod";
 import type { FastifyInstance } from "fastify";
-import { createProject } from "../services/projects.js";
+import { createProject, listProjectsForOwner } from "../services/projects.js";
 
 export async function projectRoutes(app: FastifyInstance) {
   app.addHook("preHandler", app.requireOwner);
+
+  app.get("/projects", async (req) => {
+    const { status } = z
+      .object({ status: ProjectStatusSchema.optional() })
+      .parse(req.query);
+    return listProjectsForOwner(req.user!.id, status);
+  });
 
   app.post("/projects", async (req, reply) => {
     const input = CreateProjectSchema.parse(req.body);
