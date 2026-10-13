@@ -66,3 +66,13 @@ export const ReorderMilestonesSchema = z.object({
   ids: z.array(z.string().uuid()),
 });
 export type ReorderMilestonesInput = z.infer<typeof ReorderMilestonesSchema>;
+
+export const CommentAuthorTypeSchema = z.enum(["owner", "client"]);
+
+export const CreateCommentSchema = z.object({
+  body: trimmed(5000),
+  milestoneId: z.string().uuid().nullable().optional(),
+});
+
+export type CommentAuthorType = z.infer<typeof CommentAuthorTypeSchema>;
+export type CreateCommentInput = z.infer<typeof CreateCommentSchema>;

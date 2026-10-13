@@ -29,6 +29,13 @@
       "when": 1791900314099,
       "tag": "0003_slow_demogoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791900690411,
+      "tag": "0004_aspiring_mauler",
+      "breakpoints": true
     }
   ]
 }

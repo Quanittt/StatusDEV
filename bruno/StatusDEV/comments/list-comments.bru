@@ -1,0 +1,15 @@
+meta {
+  name: List comments
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/projects/{{projectId}}/comments
+  body: none
+  auth: none
+}
+
+docs {
+  Усі коментарі проєкту (власника і клієнта), від старих до нових. authorType: owner | client.
+}

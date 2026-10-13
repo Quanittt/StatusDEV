@@ -1,0 +1,22 @@
+meta {
+  name: Create comment
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/projects/{{projectId}}/comments
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "body": "Макети готові, подивіться, будь ласка",
+    "milestoneId": "{{milestoneId}}"
+  }
+}
+
+docs {
+  Коментар від імені власника (authorType = owner). milestoneId необов'язковий; має належати цьому проєкту.
+}

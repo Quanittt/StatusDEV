@@ -25,6 +25,11 @@ export const milestoneStatus = pgEnum("milestone_status", [
   "done",
 ]);
 
+export const commentAuthorType = pgEnum("comment_author_type", [
+  "owner",
+  "client",
+]);
+
 export const clients = pgTable(
   "clients",
   {
@@ -104,9 +109,11 @@ export const comments = pgTable(
     milestoneId: uuid("milestone_id").references(() => milestones.id, {
       onDelete: "cascade",
     }),
-    authorId: text("author_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    authorType: commentAuthorType("author_type").default("owner").notNull(),
+    // null для коментарів клієнта з порталу: у клієнта немає облікового запису.
+    authorId: text("author_id").references(() => user.id, {
+      onDelete: "cascade",
+    }),
     body: text("body").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
