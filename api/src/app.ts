@@ -16,7 +16,11 @@ export function buildApp({ logger = true }: { logger?: boolean } = {}) {
   const app = Fastify({ logger });
 
   registerErrorHandler(app);
-  app.register(cors, { origin: env.WEB_URL, credentials: true });
+  app.register(cors, {
+    origin: env.WEB_URL,
+    credentials: true,
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  });
   app.register(requireOwnerPlugin);
 
   // Парсер тіла відключений тільки всередині цього плагіна (encapsulation).

@@ -47,4 +47,23 @@ describe("smoke", () => {
     expect(created.statusCode).toBe(201);
     expect(created.json().ownerId).toBe(user.id);
   });
+
+  it("CORS дозволяє PATCH/PUT/DELETE з cookies для WEB_URL", async () => {
+    for (const method of ["PATCH", "PUT", "DELETE"]) {
+      const res = await app.inject({
+        method: "OPTIONS",
+        url: "/clients/x",
+        headers: {
+          origin: "http://localhost:5173",
+          "access-control-request-method": method,
+        },
+      });
+      expect(res.statusCode).toBe(204);
+      expect(res.headers["access-control-allow-origin"]).toBe(
+        "http://localhost:5173",
+      );
+      expect(res.headers["access-control-allow-credentials"]).toBe("true");
+      expect(res.headers["access-control-allow-methods"]).toContain(method);
+    }
+  });
 });
