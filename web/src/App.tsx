@@ -5,6 +5,7 @@ import AuthPage from '@/pages/AuthPage'
 import ClientsPage from '@/pages/ClientsPage'
 import NewProjectPage from '@/pages/NewProjectPage'
 import NotFoundPage from '@/pages/NotFoundPage'
+import PortalPage from '@/pages/PortalPage'
 import ProjectPage from '@/pages/ProjectPage'
 import ProjectsPage from '@/pages/ProjectsPage'
 
@@ -13,6 +14,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/signup" element={<AuthPage mode="signup" />} />
+      <Route path="/p/:token" element={<PortalPage />} />
       <Route element={<AppLayout />}>
         <Route path="/" element={<ProjectsPage />} />
         <Route path="/projects/new" element={<NewProjectPage />} />

@@ -36,6 +36,13 @@
       "when": 1791900690411,
       "tag": "0004_aspiring_mauler",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791990184471,
+      "tag": "0005_yielding_shen",
+      "breakpoints": true
     }
   ]
 }

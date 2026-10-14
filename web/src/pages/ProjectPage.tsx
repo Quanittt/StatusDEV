@@ -1,6 +1,6 @@
 import type { MilestoneStatus, ProjectStatus } from '@statusdev/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, CalendarDays, Check, Circle, CircleDot, Trash2 } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Check, Copy, ExternalLink, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input, Select, Textarea } from '@/components/ui/input'
 import { http } from '@/lib/api'
 import { dateInputToApi, formatDate, timeAgo } from '@/lib/format'
+import { MILESTONE_STYLE } from '@/lib/milestone-style'
 import {
   MILESTONE_STATUS_LABEL,
   PROJECT_STATUS_LABEL,
@@ -27,10 +28,70 @@ const NEXT: Record<MilestoneStatus, MilestoneStatus> = {
   done: 'todo',
 }
 
-const MILESTONE_STYLE: Record<MilestoneStatus, { icon: typeof Circle; cls: string }> = {
-  todo: { icon: Circle, cls: 'bg-secondary text-secondary-foreground' },
-  in_progress: { icon: CircleDot, cls: 'bg-info-bg text-info-fg' },
-  done: { icon: Check, cls: 'bg-ok-bg text-ok-fg' },
+// Посилання для клієнта: створити, скопіювати, оновити (старе перестає працювати) або вимкнути.
+function ShareBlock({ project, onChanged }: { project: ProjectDetails; onChanged: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const create = useMutation({ mutationFn: () => http.post(`/projects/${project.id}/share`), onSuccess: onChanged })
+  const revoke = useMutation({ mutationFn: () => http.delete(`/projects/${project.id}/share`), onSuccess: onChanged })
+  const link = project.shareToken ? `${window.location.origin}/p/${project.shareToken}` : null
+
+  async function copy() {
+    if (!link) return
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // буфер недоступний (не https або заборона): користувач скопіює вручну з поля
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-xs font-semibold uppercase text-muted-foreground">Посилання для клієнта</p>
+      {link ? (
+        <>
+          <Input readOnly value={link} onFocus={(e) => e.currentTarget.select()} aria-label="Посилання для клієнта" />
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={copy}>
+              {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? 'Скопійовано' : 'Копіювати'}
+            </Button>
+            <Button size="sm" variant="ghost" asChild>
+              <a href={link} target="_blank" rel="noreferrer">
+                <ExternalLink className="size-4" /> Відкрити
+              </a>
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={create.isPending}
+              onClick={() => confirm('Створити нове посилання? Старе одразу перестане працювати.') && create.mutate()}
+            >
+              Нове посилання
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={revoke.isPending}
+              onClick={() => confirm('Вимкнути посилання? Клієнт більше не зможе його відкрити.') && revoke.mutate()}
+            >
+              <span className="text-destructive">Вимкнути</span>
+            </Button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-muted-foreground">Клієнт відкриє його без реєстрації й побачить етапи та що потрібно від нього.</p>
+          <Button size="sm" variant="outline" disabled={create.isPending} onClick={() => create.mutate()}>
+            Створити посилання
+          </Button>
+        </>
+      )}
+      <ErrorText error={create.error ?? revoke.error} />
+    </div>
+  )
 }
 
 function MilestoneRow({ m, onChanged }: { m: Milestone; onChanged: () => void }) {
@@ -243,6 +304,7 @@ export default function ProjectPage() {
               <ErrorText error={setStatus.error} />
             </div>
           </div>
+          <ShareBlock project={p} onChanged={refresh} />
           <div>
             <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Клієнт</p>
             {p.clientName ?? '—'}

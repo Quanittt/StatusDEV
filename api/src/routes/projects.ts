@@ -16,6 +16,7 @@ import {
   reorderMilestones,
   updateProject,
 } from "../services/projects.js";
+import { createShareLink, revokeShareLink } from "../services/portal.js";
 
 const IdParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -51,6 +52,18 @@ export async function projectRoutes(app: FastifyInstance) {
     const { id } = IdParamsSchema.parse(req.params);
     const { ids } = ReorderMilestonesSchema.parse(req.body);
     return reorderMilestones(id, req.user!.id, ids);
+  });
+
+  // Посилання для клієнта: повторний POST створює нове і вимикає старе.
+  app.post("/projects/:id/share", async (req, reply) => {
+    const { id } = IdParamsSchema.parse(req.params);
+    return reply.status(201).send(await createShareLink(id, req.user!.id));
+  });
+
+  app.delete("/projects/:id/share", async (req, reply) => {
+    const { id } = IdParamsSchema.parse(req.params);
+    await revokeShareLink(id, req.user!.id);
+    return reply.status(204).send();
   });
 
   app.patch("/projects/:id", async (req) => {

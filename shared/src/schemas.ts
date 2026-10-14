@@ -74,5 +74,16 @@ export const CreateCommentSchema = z.object({
   milestoneId: z.string().uuid().nullable().optional(),
 });
 
+// Коментар з порталу: клієнт без акаунта, тому лише текст (без milestoneId).
+export const CreatePortalCommentSchema = z.object({
+  body: trimmed(2000),
+});
+export const PortalTokenSchema = z
+  .string()
+  .min(20)
+  .max(64)
+  .regex(/^[A-Za-z0-9_-]+$/);
+
+export type CreatePortalCommentInput = z.infer<typeof CreatePortalCommentSchema>;
 export type CommentAuthorType = z.infer<typeof CommentAuthorTypeSchema>;
 export type CreateCommentInput = z.infer<typeof CreateCommentSchema>;

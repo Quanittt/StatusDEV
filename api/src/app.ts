@@ -10,6 +10,7 @@ import { clientRoutes } from "./routes/clients.js";
 import { commentRoutes } from "./routes/comments.js";
 import { meRoutes } from "./routes/me.js";
 import { milestoneRoutes } from "./routes/milestones.js";
+import { portalRoutes } from "./routes/portal.js";
 import { projectRoutes } from "./routes/projects.js";
 
 export function buildApp({ logger = true }: { logger?: boolean } = {}) {
@@ -30,6 +31,7 @@ export function buildApp({ logger = true }: { logger?: boolean } = {}) {
   app.register(projectRoutes);
   app.register(milestoneRoutes);
   app.register(commentRoutes);
+  app.register(portalRoutes);
 
   app.get("/health", async () => {
     await db.execute(sql`select 1`);

@@ -64,6 +64,8 @@ export const projects = pgTable(
     description: text("description"),
     status: projectStatus("status").default("active").notNull(),
     deadline: timestamp("deadline"),
+    // Секретний токен посилання для клієнта (портал без акаунта). null = посилання вимкнено.
+    shareToken: text("share_token").unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

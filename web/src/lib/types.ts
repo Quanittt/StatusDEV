@@ -51,7 +51,38 @@ export interface ProjectDetails {
   updatedAt: string
   clientId: string
   clientName: string | null
+  shareToken: string | null
   milestones: Milestone[]
+}
+
+export interface PortalMilestone {
+  id: string
+  title: string
+  status: MilestoneStatus
+  dueDate: string | null
+  clientAction: string | null
+  completedAt: string | null
+}
+
+export interface PortalComment {
+  id: string
+  body: string
+  authorType: 'owner' | 'client'
+  createdAt: string
+}
+
+export interface PortalData {
+  title: string
+  description: string | null
+  status: ProjectStatus
+  deadline: string | null
+  updatedAt: string
+  owner: { name: string; color: string | null }
+  milestones: PortalMilestone[]
+  milestonesDone: number
+  progress: number
+  nextDate: string | null
+  comments: PortalComment[]
 }
 
 export interface Comment {
