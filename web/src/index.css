@@ -4,42 +4,27 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --radius: 0.5rem;
+  --background: #f7f0e1;
+  --foreground: #2e2118;
+  --card: #fdfaf2;
+  --card-foreground: #2e2118;
+  --primary: #8a4b25;
+  --primary-foreground: #fff8ec;
+  --secondary: #efe4cf;
+  --secondary-foreground: #3b2a1e;
+  --muted: #efe4cf;
+  --muted-foreground: #7d6b58;
+  --accent: #ede0c8;
+  --accent-foreground: #2e2118;
+  --destructive: #b3412e;
+  --border: #dccdb2;
+  --input: #cdbb9b;
+  --ring: #b8794a;
+  --header: #3a2a20;
+  --header-foreground: #f4e9d4;
+  --success: #5d7a3a;
+  --warning: #b07d1e;
 }
 
 @theme inline {
@@ -62,6 +47,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 }
 
 @layer base {

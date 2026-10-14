@@ -1,12 +1,24 @@
 import { Route, Routes } from 'react-router-dom'
 
-import HomePage from '@/pages/HomePage'
+import AppLayout from '@/layouts/AppLayout'
+import AuthPage from '@/pages/AuthPage'
+import ClientsPage from '@/pages/ClientsPage'
+import NewProjectPage from '@/pages/NewProjectPage'
 import NotFoundPage from '@/pages/NotFoundPage'
+import ProjectPage from '@/pages/ProjectPage'
+import ProjectsPage from '@/pages/ProjectsPage'
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<AuthPage mode="login" />} />
+      <Route path="/signup" element={<AuthPage mode="signup" />} />
+      <Route element={<AppLayout />}>
+        <Route path="/" element={<ProjectsPage />} />
+        <Route path="/projects/new" element={<NewProjectPage />} />
+        <Route path="/projects/:id" element={<ProjectPage />} />
+        <Route path="/clients" element={<ClientsPage />} />
+      </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
