@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StatusDEV — дизайн-дошка</title>
+<style>
+  /* Токени дзеркалять web/src/index.css */
+  :root {
+    --background:#f7f0e1; --foreground:#2e2118; --card:#fdfaf2;
+    --primary:#8a4b25; --primary-fg:#fff8ec;
+    --secondary:#efe4cf; --muted-fg:#7d6b58; --accent:#ede0c8;
+    --destructive:#b3412e; --border:#dccdb2; --input:#cdbb9b; --ring:#b8794a;
+    --header:#3a2a20; --header-fg:#f4e9d4; --success:#5d7a3a; --warning:#b07d1e;
+    --radius:8px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#e9dfca; color:var(--foreground);
+    font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .canvas { padding:40px; display:flex; flex-direction:column; gap:56px; }
+  h1.board { margin:0; font-size:28px; }
+  .board-sub { color:var(--muted-fg); margin:4px 0 0; }
+  h2.sec { margin:0 0 14px; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted-fg); }
+  .row { display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; }
+
+  /* «фрейм» як у Figma */
+  .frame-wrap { display:flex; flex-direction:column; gap:6px; }
+  .frame-label { font-size:12px; color:var(--muted-fg); }
+  .frame { background:var(--background); border:1px solid var(--border); border-radius:4px; overflow:hidden;
+    box-shadow:0 1px 2px rgba(58,42,32,.12), 0 8px 24px rgba(58,42,32,.08); }
+
+  /* палітра */
+  .swatches { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; max-width:900px; }
+  .sw { border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; background:var(--card); }
+  .sw i { display:block; height:56px; }
+  .sw b { display:block; padding:8px 10px 0; font-size:13px; }
+  .sw span { display:block; padding:0 10px 8px; font-size:12px; color:var(--muted-fg); font-family:ui-monospace,Consolas,monospace; }
+
+  /* типографіка */
+  .type { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 24px; min-width:420px; }
+  .type div { margin:6px 0; } .type small { color:var(--muted-fg); font-size:11px; display:block; }
+
+  /* компоненти */
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:36px; padding:0 16px;
+    border-radius:6px; border:1px solid transparent; font:500 14px system-ui; cursor:pointer; }
+  .btn.sm { height:32px; padding:0 12px; } .btn.lg { height:40px; padding:0 24px; }
+  .btn.default { background:var(--primary); color:var(--primary-fg); }
+  .btn.secondary { background:var(--secondary); color:#3b2a1e; }
+  .btn.outline { background:var(--background); border-color:var(--input); color:var(--foreground); }
+  .btn.ghost { background:transparent; color:var(--foreground); }
+  .btn.destructive { background:var(--destructive); color:#fff; }
+  .btn.disabled { opacity:.5; }
+  .btn.focus { outline:2px solid var(--ring); outline-offset:1px; }
+  .field { display:flex; flex-direction:column; gap:6px; font-weight:500; font-size:14px; width:260px; }
+  .input { height:36px; border:1px solid var(--input); background:var(--card); border-radius:6px; padding:0 12px;
+    display:flex; align-items:center; font-weight:400; color:var(--muted-fg); }
+  .input.focus { outline:2px solid var(--ring); outline-offset:0; color:var(--foreground); }
+  .input.error { border-color:var(--destructive); }
+  .hint { font-size:12px; font-weight:400; color:var(--muted-fg); } .hint.err { color:var(--destructive); }
+  .badge { display:inline-flex; align-items:center; gap:4px; border:1px solid var(--border); color:var(--muted-fg);
+    border-radius:999px; padding:1px 8px; font-size:12px; font-weight:500; }
+  .badge.success { border-color:rgba(93,122,58,.4); background:rgba(93,122,58,.1); color:var(--success); }
+  .badge.warning { border-color:rgba(176,125,30,.4); background:rgba(176,125,30,.1); color:var(--warning); }
+  .badge.primary { border-color:rgba(138,75,37,.3); background:rgba(138,75,37,.1); color:var(--primary); }
+  .pill { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border-radius:999px; font-size:12px; font-weight:500; }
+  .pill.todo { background:var(--secondary); color:#3b2a1e; }
+  .pill.prog { background:#dbeafe; color:#1d4ed8; }
+  .pill.done { background:#dcfce7; color:#15803d; }
+  .action { background:#fef3c7; color:#92400e; border-radius:6px; padding:6px 12px; font-size:13px; }
+  .bar { height:8px; background:var(--secondary); border-radius:999px; overflow:hidden; width:180px; }
+  .bar > div { height:100%; background:var(--success); border-radius:999px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); }
+
+  /* екрани */
+  .hdr { background:var(--header); color:var(--header-fg); height:56px; display:flex; align-items:center; gap:16px; padding:0 20px; }
+  .logo { display:flex; align-items:center; gap:8px; font-weight:600; color:#fff; }
+  .logo i { width:28px; height:28px; border-radius:6px; background:var(--primary); display:grid; place-items:center; font-style:normal; font-size:14px; }
+  .nav a { display:inline-block; padding:6px 12px; border-radius:6px; font-weight:500; color:rgba(244,233,212,.8); margin-right:4px; }
+  .nav a.on { background:rgba(255,255,255,.15); color:#fff; }
+  .me { margin-left:auto; color:rgba(244,233,212,.8); }
+  .page { padding:24px 32px; display:flex; flex-direction:column; gap:16px; }
+  .page h1 { margin:0; font-size:24px; }
+  .toolbar { display:flex; justify-content:space-between; align-items:center; }
+  .list { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .tabs { display:flex; gap:4px; padding:8px 12px; background:rgba(239,228,207,.6); border-bottom:1px solid var(--border); }
+  .tabs span { padding:4px 12px; border-radius:6px; color:var(--muted-fg); }
+  .tabs span.on { background:var(--card); color:var(--foreground); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  .tabs em { font-style:normal; font-size:12px; background:var(--accent); border-radius:999px; padding:0 6px; margin-left:4px; }
+  .item { padding:16px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:8px; }
+  .item:first-of-type { border-top:0; }
+  .item h3 { margin:0; font-size:16px; color:var(--primary); display:inline; margin-right:8px; }
+  .meta { color:var(--muted-fg); font-size:12px; display:flex; gap:16px; flex-wrap:wrap; }
+  .prow { display:flex; align-items:center; gap:12px; font-size:12px; color:var(--muted-fg); }
+  .two { display:grid; grid-template-columns:1fr 260px; gap:24px; }
+  .panel-h { padding:12px 16px; background:rgba(239,228,207,.6); border-bottom:1px solid var(--border); font-weight:600; display:flex; gap:12px; align-items:center; }
+  .ms { padding:14px 16px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+  .ms:first-of-type { border-top:0; }
+  .ms .top { display:flex; align-items:center; gap:12px; } .ms .top b { flex:1; font-weight:500; }
+  .ms .top b.done { text-decoration:line-through; color:var(--muted-fg); }
+  .aside { padding:16px; display:flex; flex-direction:column; gap:14px; font-size:13px; height:fit-content; }
+  .aside u { display:block; text-decoration:none; font-size:11px; font-weight:600; text-transform:uppercase; color:var(--muted-fg); margin-bottom:3px; }
+  .center { min-height:100%; display:grid; place-items:center; padding:32px; }
+  .auth { width:340px; display:flex; flex-direction:column; gap:16px; align-items:center; }
+  .auth .big { width:48px; height:48px; border-radius:12px; background:var(--header); color:var(--header-fg); display:grid; place-items:center; font-size:20px; font-weight:600; }
+  .auth .card { width:100%; padding:20px; display:flex; flex-direction:column; gap:14px; }
+  .auth .field { width:100%; }
+  .alert { border:1px solid rgba(179,65,46,.4); background:rgba(179,65,46,.1); color:var(--destructive); border-radius:6px; padding:8px 12px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <header>
+    <h1 class="board">StatusDEV — дизайн-дошка</h1>
+    <p class="board-sub">Кабінет власника · «як GitHub, але кремово-коричневий». Токени = <code>web/src/index.css</code>. Жовтень 2026.</p>
+  </header>
+
+  <section>
+    <h2 class="sec">01 · Кольори</h2>
+    <div class="swatches">
+      <div class="sw"><i style="background:#f7f0e1"></i><b>background</b><span>#F7F0E1</span></div>
+      <div class="sw"><i style="background:#fdfaf2"></i><b>card</b><span>#FDFAF2</span></div>
+      <div class="sw"><i style="background:#efe4cf"></i><b>secondary / muted</b><span>#EFE4CF</span></div>
+      <div class="sw"><i style="background:#ede0c8"></i><b>accent</b><span>#EDE0C8</span></div>
+      <div class="sw"><i style="background:#dccdb2"></i><b>border</b><span>#DCCDB2</span></div>
+      <div class="sw"><i style="background:#cdbb9b"></i><b>input</b><span>#CDBB9B</span></div>
+      <div class="sw"><i style="background:#8a4b25"></i><b>primary</b><span>#8A4B25</span></div>
+      <div class="sw"><i style="background:#b8794a"></i><b>ring</b><span>#B8794A</span></div>
+      <div class="sw"><i style="background:#3a2a20"></i><b>header</b><span>#3A2A20</span></div>
+      <div class="sw"><i style="background:#2e2118"></i><b>foreground</b><span>#2E2118</span></div>
+      <div class="sw"><i style="background:#7d6b58"></i><b>muted-foreground</b><span>#7D6B58</span></div>
+      <div class="sw"><i style="background:#5d7a3a"></i><b>success</b><span>#5D7A3A</span></div>
+      <div class="sw"><i style="background:#b07d1e"></i><b>warning</b><span>#B07D1E</span></div>
+      <div class="sw"><i style="background:#b3412e"></i><b>destructive</b><span>#B3412E</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">02 · Типографіка</h2>
+    <div class="type">
+      <div style="font-size:24px;font-weight:600">Заголовок сторінки <small>24 / semibold</small></div>
+      <div style="font-size:16px;font-weight:600">Назва проєкту в списку <small>16 / semibold, колір primary</small></div>
+      <div style="font-size:14px">Основний текст інтерфейсу <small>14 / regular · системний шрифт</small></div>
+      <div style="font-size:12px;color:var(--muted-fg)">Підпис, дата, метадані <small>12 / muted-foreground</small></div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-fg)">Мітка в бічній панелі <small>11 / semibold / caps</small></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">03 · Компоненти</h2>
+    <div class="row">
+      <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <b>Button</b>
+        <div class="row" style="gap:10px">
+          <span class="btn default">default</span><span class="btn secondary">secondary</span>
+          <span class="btn outline">outline</span><span class="btn ghost">ghost</span><span class="btn destructive">destructive</span>
+        </div>
+        <div class="row" style="gap:10px">
+          <span class="btn default sm">sm 32</span><span class="btn default">md 36</span><span class="btn default lg">lg 40</span>
+          <span class="btn default focus">focus</span><span class="btn default disabled">disabled</span>
+        </div>
+      </div>
+      <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <b>Input / Field</b>
+        <div class="row" style="gap:16px">
+          <div class="field">Email<div class="input">name@example.com</div></div>
+          <div class="field">Пароль<div class="input focus">••••••••</div><span class="hint">Щонайменше 8 символів</span></div>
+          <div class="field">Пароль<div class="input error">•••</div><span class="hint err">Пароль занадто короткий</span></div>
+        </div>
+      </div>
+      <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <b>Статуси проєкту (Badge)</b>
+        <div class="row" style="gap:8px">
+          <span class="badge success">Активний</span><span class="badge warning">На паузі</span>
+          <span class="badge primary">Завершений</span><span class="badge">В архіві</span>
+        </div>
+        <b>Статуси етапу (слово + іконка)</b>
+        <div class="row" style="gap:8px">
+          <span class="pill todo">○ Очікує</span><span class="pill prog">◐ В роботі</span><span class="pill done">✓ Готово</span>
+        </div>
+        <b>Прогрес</b>
+        <div class="bar"><div style="width:60%"></div></div>
+        <b>Потрібно від клієнта</b>
+        <div class="action"><b>Потрібно від клієнта:</b> надіслати логотип у векторі</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">04 · Екрани</h2>
+    <div class="row">
+
+      <div class="frame-wrap">
+        <div class="frame-label">Вхід · 400 × 560</div>
+        <div class="frame" style="width:400px;height:560px">
+          <div class="center">
+            <div class="auth">
+              <div class="big">S</div>
+              <div style="font-size:20px;font-weight:600">Увійти в StatusDEV</div>
+              <div class="card">
+                <div class="alert">Невірний email або пароль</div>
+                <div class="field">Email<div class="input focus">name@example.com</div></div>
+                <div class="field">Пароль<div class="input">••••••••</div></div>
+                <span class="btn default">Увійти</span>
+              </div>
+              <div class="card" style="padding:14px;text-align:center;font-size:13px">Вперше тут? <b style="color:var(--primary)">Створити акаунт</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="frame-label">Список проєктів · 1000 × 640</div>
+        <div class="frame" style="width:1000px">
+          <div class="hdr"><div class="logo"><i>S</i>StatusDEV</div>
+            <div class="nav"><a class="on">Проєкти</a><a>Клієнти</a></div><div class="me">Влад ⎋</div></div>
+          <div class="page">
+            <div class="toolbar"><h1>Проєкти</h1><span class="btn default">+ Новий проєкт</span></div>
+            <div class="list">
+              <div class="tabs"><span>Усі<em>3</em></span><span class="on">Активні<em>2</em></span><span>На паузі<em>0</em></span><span>Завершені<em>1</em></span><span>Архів<em>0</em></span></div>
+              <div class="item">
+                <div><h3>Сайт для кав'ярні «Зерно»</h3><span class="badge success">Активний</span></div>
+                <div class="meta">Редизайн лендингу та меню з онлайн-замовленням</div>
+                <div class="prow"><div class="bar"><div style="width:60%"></div></div>3/5 етапів</div>
+                <div class="meta"><span>Клієнт: Олена Коваль</span><span>до 30 жовт. 2026</span><span>оновлено 2 дн тому</span></div>
+              </div>
+              <div class="item">
+                <div><h3>Брендинг студії йоги</h3><span class="badge success">Активний</span></div>
+                <div class="prow"><div class="bar"><div style="width:20%"></div></div>1/5 етапів</div>
+                <div class="meta"><span>Клієнт: Studio Om</span><span>оновлено 5 год тому</span></div>
+              </div>
+              <div class="item">
+                <div><h3>SMM для магазину кераміки</h3><span class="badge primary">Завершений</span></div>
+                <div class="prow"><div class="bar"><div style="width:100%"></div></div>4/4 етапів</div>
+                <div class="meta"><span>Клієнт: Глина</span><span>оновлено 3 тиж тому</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="frame-label">Сторінка проєкту · 1000 × 700</div>
+        <div class="frame" style="width:1000px">
+          <div class="hdr"><div class="logo"><i>S</i>StatusDEV</div>
+            <div class="nav"><a class="on">Проєкти</a><a>Клієнти</a></div><div class="me">Влад ⎋</div></div>
+          <div class="page">
+            <div style="color:var(--muted-fg);font-size:13px">← Усі проєкти</div>
+            <div style="display:flex;gap:12px;align-items:center"><h1 style="margin:0;font-size:24px">Сайт для кав'ярні «Зерно»</h1><span class="badge success">Активний</span></div>
+            <div class="two">
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div class="list">
+                  <div class="panel-h">Етапи <div class="bar" style="width:140px"><div style="width:60%"></div></div><span style="font-weight:400;font-size:12px;color:var(--muted-fg)">3/5</span></div>
+                  <div class="ms"><div class="top"><span class="pill done">✓ Готово</span><b class="done">Бриф і структура</b></div></div>
+                  <div class="ms"><div class="top"><span class="pill done">✓ Готово</span><b class="done">Дизайн-макети</b></div></div>
+                  <div class="ms"><div class="top"><span class="pill prog">◐ В роботі</span><b>Верстка головної</b><span class="meta">20 жовт. 2026</span></div>
+                    <div class="action"><b>Потрібно від клієнта:</b> затвердити макет головної</div></div>
+                  <div class="ms"><div class="top"><span class="pill todo">○ Очікує</span><b>Меню та кошик</b></div></div>
+                  <div class="ms" style="background:rgba(239,228,207,.4)"><div class="top"><div class="input" style="flex:1">Назва нового етапу</div><span class="btn default sm">Додати етап</span></div></div>
+                </div>
+                <div class="list">
+                  <div class="panel-h">Коментарі</div>
+                  <div class="ms"><div class="meta"><span class="badge primary">Ви</span>вчора</div>Надіслав макет на погодження, чекаю відповідь.</div>
+                </div>
+              </div>
+              <div class="card aside">
+                <div><u>Статус</u><div class="input" style="color:var(--foreground)">Активний ▾</div></div>
+                <div><u>Клієнт</u>Олена Коваль</div>
+                <div><u>Дедлайн</u>30 жовт. 2026</div>
+                <div><u>Оновлено</u>2 дн тому</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="frame-label">Клієнти · 1000 × 520</div>
+        <div class="frame" style="width:1000px">
+          <div class="hdr"><div class="logo"><i>S</i>StatusDEV</div>
+            <div class="nav"><a>Проєкти</a><a class="on">Клієнти</a></div><div class="me">Влад ⎋</div></div>
+          <div class="page">
+            <div style="display:grid;grid-template-columns:1fr 300px;gap:24px">
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <h1 style="margin:0;font-size:24px">Клієнти</h1>
+                <div class="list">
+                  <div class="item"><b>Олена Коваль</b><div class="meta"><span>✉ olena@zerno.ua</span><span>☎ +380 50 123 45 67</span></div></div>
+                  <div class="item"><b>Studio Om</b><div class="meta"><span>✉ hello@studio-om.com</span></div></div>
+                </div>
+              </div>
+              <div class="card" style="padding:16px;display:flex;flex-direction:column;gap:12px;height:fit-content">
+                <b>Новий клієнт</b>
+                <div class="field" style="width:100%">Ім'я / компанія<div class="input">—</div></div>
+                <div class="field" style="width:100%">Email<div class="input">—</div></div>
+                <span class="btn default">Додати клієнта</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">05 · Структура файлу (пропозиція для Figma)</h2>
+    <div class="card" style="padding:20px;max-width:620px;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.7">
+      00_Cover<br>
+      01_Foundations &nbsp;— Colors · Typography · Radius/Spacing<br>
+      02_Components &nbsp;&nbsp;— Button · Input · Badge · Pill · Progress · ClientAction · Header<br>
+      03_Screens &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— Auth · Projects · Project · NewProject · Clients<br>
+      04_Portal (later) — мобільний 375 px, брендований кольором власника
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

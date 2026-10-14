@@ -1,0 +1,53 @@
+{
+  "name": "StatusDEV Design Kit",
+  "id": "statusdev-design-kit-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": [
+    "figma"
+  ],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ]
+  },
+  "menu": [
+    {
+      "name": "1. Структура сторінок і токени",
+      "command": "setup"
+    },
+    {
+      "name": "2. Компоненти (UI Kit)",
+      "command": "components"
+    },
+    {
+      "name": "3. Екрани (Desktop)",
+      "command": "screens"
+    },
+    {
+      "name": "4. Аудит контрасту і токенів",
+      "command": "audit"
+    },
+    {
+      "name": "5. User Flow (01_User_Flow)",
+      "command": "userflow"
+    },
+    {
+      "name": "6. Sitemap (02_Sitemap)",
+      "command": "sitemap"
+    },
+    {
+      "name": "7. Wireframes (03_Wireframes)",
+      "command": "wireframes"
+    },
+    {
+      "name": "8. Mobile — портал клієнта (06_Mobile)",
+      "command": "mobile"
+    },
+    {
+      "name": "9. Виправити 04_Design_System",
+      "command": "fix04"
+    }
+  ]
+}
