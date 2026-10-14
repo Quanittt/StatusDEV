@@ -15,8 +15,21 @@ export class ApiError extends Error {
   }
 }
 
+// Наш API: { error: { code, message } }. Better Auth (/api/auth/*): { code, message }.
 interface ErrorBody {
   error?: { code?: string; message?: string; details?: unknown }
+  code?: string
+  message?: string
+}
+
+// Better Auth повертає англійські повідомлення, тому відомі коди перекладаємо.
+const AUTH_MESSAGES: Record<string, string> = {
+  PASSWORD_TOO_SHORT: 'Пароль занадто короткий: потрібно щонайменше 8 символів',
+  PASSWORD_TOO_LONG: 'Пароль занадто довгий: максимум 128 символів',
+  INVALID_EMAIL: 'Некоректна адреса email',
+  INVALID_EMAIL_OR_PASSWORD: 'Невірний email або пароль',
+  USER_ALREADY_EXISTS: 'Користувач з таким email уже існує',
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: 'Користувач з таким email уже існує',
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -34,12 +47,14 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const body: unknown = await res.json().catch(() => null)
   if (!res.ok) {
-    const e = (body as ErrorBody | null)?.error
+    const b = body as ErrorBody | null
+    const e = b?.error ?? b
+    const code = e?.code ?? 'UNKNOWN'
     throw new ApiError(
       res.status,
-      e?.code ?? 'UNKNOWN',
-      e?.message ?? `Помилка ${res.status}`,
-      e?.details,
+      code,
+      AUTH_MESSAGES[code] ?? e?.message ?? `Помилка ${res.status}`,
+      b?.error?.details,
     )
   }
   return body as T
