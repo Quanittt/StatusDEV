@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm run build -w @statusdev/shared",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
