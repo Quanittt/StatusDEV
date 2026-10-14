@@ -25,6 +25,19 @@
   --header-foreground: #f4e9d4;
   --success: #5d7a3a;
   --warning: #b07d1e;
+  --primary-hover: #a05a2f;
+  --primary-active: #74401f;
+  --primary-dark: #6b3a1c;
+  --success-bg: #eaf0e0;
+  --warning-bg: #f6ecd6;
+  --primary-bg: #f1e3d8;
+  --error-bg: #f7e1dc;
+  --info-bg: #dbeafe;
+  --info-fg: #1d4ed8;
+  --ok-bg: #dcfce7;
+  --ok-fg: #15803d;
+  --action-bg: #fef3c7;
+  --action-fg: #92400e;
 }
 
 @theme inline {
@@ -51,6 +64,19 @@
   --color-header-foreground: var(--header-foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-dark: var(--primary-dark);
+  --color-success-bg: var(--success-bg);
+  --color-warning-bg: var(--warning-bg);
+  --color-primary-bg: var(--primary-bg);
+  --color-error-bg: var(--error-bg);
+  --color-info-bg: var(--info-bg);
+  --color-info-fg: var(--info-fg);
+  --color-ok-bg: var(--ok-bg);
+  --color-ok-fg: var(--ok-fg);
+  --color-action-bg: var(--action-bg);
+  --color-action-fg: var(--action-fg);
 }
 
 @layer base {

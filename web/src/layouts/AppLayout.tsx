@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   cn(
-    'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+    'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors max-sm:size-11 max-sm:justify-center max-sm:p-0',
     isActive ? 'bg-white/15 text-white' : 'text-header-foreground/80 hover:bg-white/10',
   )
 
@@ -35,10 +35,10 @@ export default function AppLayout() {
           </Link>
           <nav className="flex gap-1">
             <NavLink to="/" end className={navClass}>
-              <Briefcase className="size-4" /> Проєкти
+              <Briefcase className="size-4" /> <span className="max-sm:sr-only">Проєкти</span>
             </NavLink>
             <NavLink to="/clients" className={navClass}>
-              <Users className="size-4" /> Клієнти
+              <Users className="size-4" /> <span className="max-sm:sr-only">Клієнти</span>
             </NavLink>
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm">
@@ -46,7 +46,7 @@ export default function AppLayout() {
             <button
               onClick={logout}
               title="Вийти"
-              className="rounded-md p-2 hover:bg-white/10"
+              className="grid size-11 place-items-center rounded-md hover:bg-white/10 sm:size-9"
               aria-label="Вийти"
             >
               <LogOut className="size-4" />

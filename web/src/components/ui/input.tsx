@@ -3,10 +3,10 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 const field =
-  'w-full rounded-md border border-input bg-card px-3 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
+  'w-full rounded-md border border-input bg-card px-3 py-1.5 text-base sm:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
 
 export function Input({ className, ...props }: React.ComponentProps<'input'>) {
-  return <input className={cn(field, 'h-9', className)} {...props} />
+  return <input className={cn(field, 'h-11 sm:h-9', className)} {...props} />
 }
 
 export function Textarea({ className, ...props }: React.ComponentProps<'textarea'>) {
@@ -14,7 +14,7 @@ export function Textarea({ className, ...props }: React.ComponentProps<'textarea
 }
 
 export function Select({ className, ...props }: React.ComponentProps<'select'>) {
-  return <select className={cn(field, 'h-9', className)} {...props} />
+  return <select className={cn(field, 'h-11 sm:h-9', className)} {...props} />
 }
 
 export function Field({

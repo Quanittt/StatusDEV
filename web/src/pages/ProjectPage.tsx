@@ -29,8 +29,8 @@ const NEXT: Record<MilestoneStatus, MilestoneStatus> = {
 
 const MILESTONE_STYLE: Record<MilestoneStatus, { icon: typeof Circle; cls: string }> = {
   todo: { icon: Circle, cls: 'bg-secondary text-secondary-foreground' },
-  in_progress: { icon: CircleDot, cls: 'bg-[#dbeafe] text-[#1d4ed8]' },
-  done: { icon: Check, cls: 'bg-[#dcfce7] text-[#15803d]' },
+  in_progress: { icon: CircleDot, cls: 'bg-info-bg text-info-fg' },
+  done: { icon: Check, cls: 'bg-ok-bg text-ok-fg' },
 }
 
 function MilestoneRow({ m, onChanged }: { m: Milestone; onChanged: () => void }) {
@@ -52,7 +52,7 @@ function MilestoneRow({ m, onChanged }: { m: Milestone; onChanged: () => void })
           disabled={update.isPending}
           title="Змінити статус етапу"
           className={cn(
-            'inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium',
+            'inline-flex min-h-11 shrink-0 sm:min-h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium',
             cls,
           )}
         >
@@ -76,7 +76,7 @@ function MilestoneRow({ m, onChanged }: { m: Milestone; onChanged: () => void })
         </Button>
       </div>
       {m.clientAction && (
-        <p className="ml-1 rounded-md bg-[#fef3c7] px-3 py-1.5 text-sm text-[#92400e]">
+        <p className="ml-1 rounded-md bg-action-bg px-3 py-1.5 text-sm text-action-fg">
           <b>Потрібно від клієнта:</b> {m.clientAction}
         </p>
       )}

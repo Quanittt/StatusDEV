@@ -2,9 +2,9 @@ import { cn } from '@/lib/utils'
 
 const tones = {
   neutral: 'border-border text-muted-foreground',
-  success: 'border-success/40 bg-success/10 text-success',
-  warning: 'border-warning/40 bg-warning/10 text-warning',
-  primary: 'border-primary/30 bg-primary/10 text-primary',
+  success: 'border-success/40 bg-success-bg text-success',
+  warning: 'border-warning/40 bg-warning-bg text-warning',
+  primary: 'border-primary/30 bg-primary-bg text-primary',
 } as const
 
 export function Badge({
