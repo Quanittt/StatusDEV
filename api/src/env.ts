@@ -6,6 +6,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
   BETTER_AUTH_SECRET: z.string().min(32),
   WEB_URL: z.string().url().default("http://localhost:5173"),
+  // Публічна адреса самого API. Без неї Better Auth будує посилання на localhost.
+  API_URL: z.string().url().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -6,7 +6,7 @@ import { env } from "./env.js";
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
-  baseURL: `http://localhost:${env.PORT}`,
+  baseURL: env.API_URL ?? `http://localhost:${env.PORT}`,
   trustedOrigins: [env.WEB_URL],
   database: drizzleAdapter(db, { provider: "pg", schema }),
   emailAndPassword: { enabled: true },
