@@ -13,8 +13,27 @@ import { milestoneRoutes } from "./routes/milestones.js";
 import { portalRoutes } from "./routes/portal.js";
 import { projectRoutes } from "./routes/projects.js";
 
+// Секретний токен порталу не повинен потрапляти в логи.
+const redactToken = (url: string) =>
+  url.replace(/^(\/(?:portal|p)\/)[^/?#]+/, "$1[token]");
+
 export function buildApp({ logger = true }: { logger?: boolean } = {}) {
-  const app = Fastify({ logger });
+  const app = Fastify({
+    logger: logger
+      ? {
+          serializers: {
+            req(req) {
+              return {
+                method: req.method,
+                url: redactToken(req.url ?? ""),
+                host: req.headers.host,
+                remoteAddress: req.ip,
+              };
+            },
+          },
+        }
+      : false,
+  });
 
   registerErrorHandler(app);
   app.register(cors, {

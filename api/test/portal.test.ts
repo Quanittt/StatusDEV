@@ -141,6 +141,19 @@ describe("портал клієнта", () => {
     expect((await a.get(`/projects/${projectId}/comments`)).json()).toHaveLength(0);
   });
 
+  it("ліміт коментарів: 11-й запит поспіль отримує 429, відповіді без Referer", async () => {
+    const { share, comment } = await setup();
+    const token = await share();
+    let last = await comment(token, { body: "1" });
+    expect(last.headers["referrer-policy"]).toBe("no-referrer");
+    for (let i = 2; i <= 10; i++) last = await comment(token, { body: `${i}` });
+    expect(last.statusCode).toBe(201);
+    const blocked = await comment(token, { body: "11" });
+    expect(blocked.statusCode).toBe(429);
+    expect(blocked.json().error.code).toBe("RATE_LIMITED");
+    expect(blocked.headers["retry-after"]).toBeDefined();
+  });
+
   it("чужий проєкт: створити чи вимкнути посилання не можна (404)", async () => {
     const { projectId } = await setup();
     const bob = api(ctx.app, await createUser(ctx.app, "bob"));

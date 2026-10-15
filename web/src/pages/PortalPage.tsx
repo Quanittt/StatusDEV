@@ -39,8 +39,15 @@ export default function PortalPage() {
     const meta = document.createElement('meta')
     meta.name = 'robots'
     meta.content = 'noindex'
-    document.head.appendChild(meta)
-    return () => meta.remove()
+    // Токен у адресі не повинен потрапляти в Referer.
+    const referrer = document.createElement('meta')
+    referrer.name = 'referrer'
+    referrer.content = 'no-referrer'
+    document.head.append(meta, referrer)
+    return () => {
+      meta.remove()
+      referrer.remove()
+    }
   }, [])
 
   const portal = useQuery({
@@ -70,7 +77,9 @@ export default function PortalPage() {
   }
 
   if (portal.isError) {
-    const gone = portal.error instanceof ApiError && portal.error.status === 404
+    // 400 (обрізаний токен) і 404 для клієнта однакові: посилання недійсне, повтор не допоможе.
+    const gone =
+      portal.error instanceof ApiError && (portal.error.status === 404 || portal.error.status === 400)
     return (
       <Shell>
         <div className="flex flex-col items-center gap-3 pt-10 text-center">
@@ -172,7 +181,10 @@ export default function PortalPage() {
             placeholder="Напишіть, що думаєте…"
             aria-label="Ваш коментар"
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={(e) => {
+              setBody(e.target.value)
+              if (send.isSuccess || send.isError) send.reset()
+            }}
           />
           <ErrorText error={send.error} />
           <Button type="submit" size="lg" disabled={send.isPending || !body.trim()}>
