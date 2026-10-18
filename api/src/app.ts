@@ -52,9 +52,14 @@ export function buildApp({ logger = true }: { logger?: boolean } = {}) {
   app.register(commentRoutes);
   app.register(portalRoutes);
 
-  app.get("/health", async () => {
-    await db.execute(sql`select 1`);
-    return { ok: true, db: true };
+  app.get("/health", async (req, reply) => {
+    try {
+      await db.execute(sql`select 1`);
+      return { ok: true, db: true };
+    } catch (err) {
+      req.log.error(err);
+      return reply.status(503).send({ ok: false, db: false });
+    }
   });
 
   return app;
