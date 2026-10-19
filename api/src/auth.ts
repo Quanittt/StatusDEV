@@ -13,8 +13,8 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       plan: { type: "string", required: false, defaultValue: "free", input: false },
-      brandName: { type: "string", required: false },
-      brandColor: { type: "string", required: false },
+      brandName: { type: "string", required: false, input: false },
+      brandColor: { type: "string", required: false, input: false },
     },
   },
 });

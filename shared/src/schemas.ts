@@ -103,3 +103,17 @@ export const CreateFileSchema = FileMetaSchema.extend({
 
 export type PresignFileInput = z.infer<typeof PresignFileSchema>;
 export type CreateFileInput = z.infer<typeof CreateFileSchema>;
+
+export const UpdateProfileSchema = z
+  .object({
+    brandName: z.string().trim().min(1).max(100).nullable(),
+    brandColor: z
+      .string()
+      .regex(/^#[0-9a-fA-F]{6}$/, "Колір має бути у форматі #RRGGBB")
+      .nullable(),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, {
+    message: "Потрібно передати хоча б одне поле",
+  });
+export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
