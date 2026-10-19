@@ -7,9 +7,16 @@
     "shared"
   ],
   "scripts": {
+    "dev": "node scripts/dev.mjs",
     "dev:api": "npm run dev --workspace=api",
     "dev:web": "npm run dev --workspace=web",
     "build:shared": "npm run build --workspace=shared",
-    "test": "npm test --workspace=api"
+    "db:migrate": "npm run db:migrate --workspace=api",
+    "db:seed": "npm run db:seed --workspace=api",
+    "test": "npm test --workspace=api",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
   }
 }

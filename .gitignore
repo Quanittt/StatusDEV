@@ -27,3 +27,8 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Локальні логи (npm run dev) і результати Playwright
+logs/
+test-results/
+playwright-report/
