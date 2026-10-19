@@ -175,6 +175,15 @@ describe("чат owner / pm / junior", () => {
     );
   });
 
+  it("chat/projects показує проєкти з моєю роллю", async () => {
+    const s = await setup();
+    const roles = async (a: typeof s.owner) =>
+      (await a.get("/chat/projects")).json().map((p: { role: string }) => p.role);
+    expect(await roles(s.owner)).toEqual(["owner"]);
+    expect(await roles(s.pm)).toEqual(["pm"]);
+    expect(await roles(s.junior)).toEqual(["junior"]);
+  });
+
   it("без сесії 401", async () => {
     const res = await ctx.app.inject({
       method: "GET",

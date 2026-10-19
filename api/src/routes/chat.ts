@@ -4,6 +4,7 @@ import { z } from "zod";
 import { rateLimit } from "../plugins/rate-limit.js";
 import {
   addMember,
+  listChatProjects,
   listContacts,
   listMembers,
   listMessages,
@@ -29,6 +30,8 @@ export async function chatRoutes(app: FastifyInstance) {
     windowMs: 60_000,
     key: (req) => req.user!.id,
   });
+
+  app.get("/chat/projects", async (req) => listChatProjects(req.user!.id));
 
   app.get("/projects/:id/members", async (req) => {
     const { id } = ProjectParamsSchema.parse(req.params);

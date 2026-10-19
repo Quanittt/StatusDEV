@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Briefcase, LogOut, Users } from 'lucide-react'
+import { Briefcase, LogOut, MessageSquare, Users } from 'lucide-react'
 import { Link, Navigate, NavLink, Outlet } from 'react-router-dom'
 
 import { http } from '@/lib/api'
@@ -39,6 +39,9 @@ export default function AppLayout() {
             </NavLink>
             <NavLink to="/clients" className={navClass}>
               <Users className="size-4" /> <span className="max-sm:sr-only">Клієнти</span>
+            </NavLink>
+            <NavLink to="/chat" className={navClass}>
+              <MessageSquare className="size-4" /> <span className="max-sm:sr-only">Чат</span>
             </NavLink>
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm">

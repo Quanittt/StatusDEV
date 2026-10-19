@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 
 import AppLayout from '@/layouts/AppLayout'
 import AuthPage from '@/pages/AuthPage'
+import ChatPage from '@/pages/ChatPage'
 import ClientsPage from '@/pages/ClientsPage'
 import NewProjectPage from '@/pages/NewProjectPage'
 import NotFoundPage from '@/pages/NotFoundPage'
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/projects/new" element={<NewProjectPage />} />
         <Route path="/projects/:id" element={<ProjectPage />} />
         <Route path="/clients" element={<ClientsPage />} />
+        <Route path="/chat/:projectId?" element={<ChatPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

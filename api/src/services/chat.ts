@@ -1,5 +1,5 @@
 import type { AddMemberInput } from "@statusdev/shared";
-import { and, asc, desc, eq, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ne, or, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { chatMessages, projectMembers, projects, user } from "../db/schema.js";
 import {
@@ -39,6 +39,27 @@ export async function getRole(
       ),
     );
   return member?.role ?? null;
+}
+
+// Проєкти, де я власник або доданий учасник: для вибору чату в інтерфейсі.
+export async function listChatProjects(userId: string) {
+  const owned = await db
+    .select({ id: projects.id, title: projects.title })
+    .from(projects)
+    .where(and(eq(projects.ownerId, userId), ne(projects.status, "archived")));
+  const joined = await db
+    .select({
+      id: projects.id,
+      title: projects.title,
+      role: projectMembers.role,
+    })
+    .from(projectMembers)
+    .innerJoin(projects, eq(projects.id, projectMembers.projectId))
+    .where(eq(projectMembers.userId, userId));
+  return [
+    ...owned.map((p) => ({ ...p, role: "owner" as ChatRole })),
+    ...joined,
+  ].sort((a, b) => a.title.localeCompare(b.title));
 }
 
 async function requireRole(projectId: string, userId: string) {

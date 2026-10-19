@@ -1,7 +1,0 @@
-# Зміни цих шляхів не зливаються без схвалення власника (потрібне правило гілки main,
-# див. розділ «Безпека і ролі» в README).
-/api/                    @Quanittt
-/shared/                 @Quanittt
-/docker/                 @Quanittt
-/docker-compose.yml      @Quanittt
-/.github/                @Quanittt
