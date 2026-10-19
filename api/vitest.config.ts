@@ -14,6 +14,12 @@ export default defineConfig({
       BETTER_AUTH_SECRET: "test-secret-test-secret-test-secret-0123",
       WEB_URL: "http://localhost:5173",
       PORT: "3999",
+      RESEND_API_KEY: "re_test",
+      EMAIL_FROM: "test@example.com",
+      R2_ACCOUNT_ID: "test",
+      R2_ACCESS_KEY_ID: "test",
+      R2_SECRET_ACCESS_KEY: "test",
+      R2_BUCKET: "test-bucket",
     },
     // Одна спільна база, тому файли тестів ідуть по черзі.
     fileParallelism: false,

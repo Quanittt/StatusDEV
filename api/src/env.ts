@@ -11,6 +11,11 @@ const envSchema = z.object({
 //Resend api keys
     RESEND_API_KEY: z.string().startsWith("re_"),
     EMAIL_FROM: z.string().min(1),
+  // Cloudflare R2 (S3-сумісне сховище файлів)
+  R2_ACCOUNT_ID: z.string().min(1),
+  R2_ACCESS_KEY_ID: z.string().min(1),
+  R2_SECRET_ACCESS_KEY: z.string().min(1),
+  R2_BUCKET: z.string().min(1),
 });
 
 const parsed = envSchema.safeParse(process.env);

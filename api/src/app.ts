@@ -8,6 +8,7 @@ import { requireOwnerPlugin } from "./plugins/require-owner.js";
 import { authRoutes } from "./routes/auth.js";
 import { clientRoutes } from "./routes/clients.js";
 import { commentRoutes } from "./routes/comments.js";
+import { fileRoutes } from "./routes/files.js";
 import { meRoutes } from "./routes/me.js";
 import { milestoneRoutes } from "./routes/milestones.js";
 import { portalRoutes } from "./routes/portal.js";
@@ -50,6 +51,7 @@ export function buildApp({ logger = true }: { logger?: boolean } = {}) {
   app.register(projectRoutes);
   app.register(milestoneRoutes);
   app.register(commentRoutes);
+  app.register(fileRoutes);
   app.register(portalRoutes);
 
   app.get("/health", async (req, reply) => {

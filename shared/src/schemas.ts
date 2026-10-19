@@ -87,3 +87,19 @@ export const PortalTokenSchema = z
 export type CreatePortalCommentInput = z.infer<typeof CreatePortalCommentSchema>;
 export type CommentAuthorType = z.infer<typeof CommentAuthorTypeSchema>;
 export type CreateCommentInput = z.infer<typeof CreateCommentSchema>;
+
+export const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+
+export const FileMetaSchema = z.object({
+  name: trimmed(255),
+  mimeType: trimmed(255),
+  sizeBytes: z.number().int().positive().max(MAX_FILE_SIZE_BYTES),
+  milestoneId: z.string().uuid().nullable().optional(),
+});
+export const PresignFileSchema = FileMetaSchema;
+export const CreateFileSchema = FileMetaSchema.extend({
+  storageKey: trimmed(1024),
+});
+
+export type PresignFileInput = z.infer<typeof PresignFileSchema>;
+export type CreateFileInput = z.infer<typeof CreateFileSchema>;
