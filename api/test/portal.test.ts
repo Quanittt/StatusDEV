@@ -49,7 +49,7 @@ describe("портал клієнта", () => {
     expect(text).not.toContain("@test.com");
     expect(text).not.toContain("ownerId");
     expect(text).not.toContain("shareToken");
-    expect(Object.keys(body.owner).sort()).toEqual(["color", "name"]);
+    expect(Object.keys(body.owner).sort()).toEqual(["color", "logoUrl", "name"]);
   });
 
   it("повертає етапи, прогрес і найближчу дату", async () => {

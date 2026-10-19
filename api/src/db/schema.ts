@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   index,
   integer,
+  jsonb,
   primaryKey,
   pgEnum,
   pgTable,
@@ -24,6 +25,11 @@ export const milestoneStatus = pgEnum("milestone_status", [
   "todo",
   "in_progress",
   "done",
+]);
+
+export const milestoneClientResponse = pgEnum("milestone_client_response", [
+  "approved",
+  "changes_requested",
 ]);
 
 export const commentAuthorType = pgEnum("comment_author_type", [
@@ -67,6 +73,9 @@ export const projects = pgTable(
     deadline: timestamp("deadline"),
     // Секретний токен посилання для клієнта (портал без акаунта). null = посилання вимкнено.
     shareToken: text("share_token").unique(),
+    // Необов'язковий захист посилання: після shareExpiresAt портал віддає 410, пароль перевіряється при вході.
+    shareExpiresAt: timestamp("share_expires_at"),
+    sharePasswordHash: text("share_password_hash"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -93,6 +102,13 @@ export const milestones = pgTable(
     dueDate: timestamp("due_date"),
     clientAction: text("client_action"),
     completedAt: timestamp("completed_at"),
+    // Відповідь клієнта з порталу. Скидається, коли власник змінює статус або «що потрібно від клієнта».
+    clientResponse: milestoneClientResponse("client_response"),
+    clientResponseNote: text("client_response_note"),
+    clientRespondedAt: timestamp("client_responded_at"),
+    // Коли надіслано нагадування про дедлайн. Скидається при зміні due_date.
+    soonRemindedAt: timestamp("soon_reminded_at"),
+    overdueRemindedAt: timestamp("overdue_reminded_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -151,6 +167,37 @@ export const files = pgTable(
   ],
 );
 
+export const documentStatus = pgEnum("document_status", [
+  "pending",
+  "approved",
+  "changes_requested",
+]);
+
+// Запит на погодження файлу проєкту (договір, ТЗ). Клієнт «підписує» його іменем у порталі.
+export const documents = pgTable(
+  "documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    fileId: uuid("file_id")
+      .notNull()
+      .references(() => files.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    status: documentStatus("status").default("pending").notNull(),
+    signerName: text("signer_name"),
+    signerIp: text("signer_ip"),
+    note: text("note"),
+    respondedAt: timestamp("responded_at"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("documents_project_id_idx").on(t.projectId)],
+);
+
 export const memberRole = pgEnum("member_role", ["pm", "junior"]);
 
 // Власник проєкту береться з projects.owner_id; тут лише PM і джуни, яких він додав.
@@ -197,6 +244,35 @@ export const chatMessages = pgTable(
       t.createdAt,
     ),
   ],
+);
+
+export const activityActorType = pgEnum("activity_actor_type", [
+  "owner",
+  "client",
+  "system",
+]);
+
+// Історія подій проєкту. Назви етапів і файлів зберігаємо в data: самі записи можуть бути видалені.
+export const activityEvents = pgTable(
+  "activity_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    milestoneId: uuid("milestone_id").references(() => milestones.id, {
+      onDelete: "set null",
+    }),
+    actorType: activityActorType("actor_type").notNull(),
+    // null для клієнта (немає акаунта) і для системних подій.
+    actorId: text("actor_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    type: text("type").notNull(),
+    data: jsonb("data").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("activity_events_project_id_created_at_idx").on(t.projectId, t.createdAt)],
 );
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({

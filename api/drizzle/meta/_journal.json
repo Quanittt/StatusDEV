@@ -50,6 +50,20 @@
       "when": 1792408623112,
       "tag": "0006_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792417773328,
+      "tag": "0007_activity_reminders",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792418511272,
+      "tag": "0008_portal_security_integrations",
+      "breakpoints": true
     }
   ]
 }

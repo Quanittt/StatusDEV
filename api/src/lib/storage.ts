@@ -10,6 +10,7 @@ import { env } from "../env.js";
 
 const UPLOAD_URL_TTL = 600;
 const DOWNLOAD_URL_TTL = 300;
+const VIEW_URL_TTL = 3600;
 
 const s3 = new S3Client({
   region: "auto",
@@ -47,6 +48,15 @@ export function presignDownload(key: string, fileName: string) {
       ResponseContentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`,
     }),
     { expiresIn: DOWNLOAD_URL_TTL },
+  );
+}
+
+// Для показу в браузері (логотип): без Content-Disposition: attachment.
+export function presignView(key: string) {
+  return getSignedUrl(
+    s3,
+    new GetObjectCommand({ Bucket: env.R2_BUCKET, Key: key }),
+    { expiresIn: VIEW_URL_TTL },
   );
 }
 

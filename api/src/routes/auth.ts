@@ -10,6 +10,12 @@ export async function authRoutes(app: FastifyInstance) {
   const handler = toNodeHandler(auth);
 
   app.all("/api/auth/*", async (req, reply) => {
+    // hijack() віддає відповідь Better Auth напряму, і заголовки, які вже поставив
+    // @fastify/cors (Access-Control-Allow-Origin тощо), самі туди не потрапляють.
+    // Без цього браузер на іншому origin блокує вхід і реєстрацію ("Failed to fetch").
+    for (const [name, value] of Object.entries(reply.getHeaders())) {
+      if (value !== undefined) reply.raw.setHeader(name, value);
+    }
     reply.hijack();
     await handler(req.raw, reply.raw);
   });

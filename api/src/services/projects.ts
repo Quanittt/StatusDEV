@@ -18,7 +18,9 @@ import {
 import { db } from "../db/client.js";
 import { clients, milestones, projects, user } from "../db/schema.js";
 import { BadRequestError, NotFoundError, PlanLimitError } from "../errors.js";
-import { MILESTONE_TEMPLATES } from "./milestone-templates.js";
+import { recordActivity } from "./activity.js";
+import { PROJECT_TEMPLATES } from "./milestone-templates.js";
+import { dispatch, notifyClientMilestoneStatus } from "./notifications.js";
 
 const FREE_ACTIVE_PROJECTS_LIMIT = 2;
 
@@ -40,6 +42,14 @@ export async function touchProject(tx: Tx, projectId: string) {
     .update(projects)
     .set({ updatedAt: sql`now()` })
     .where(eq(projects.id, projectId));
+}
+
+// Хеш пароля порталу ніколи не йде назовні, навіть власнику: лише прапорець, що пароль є.
+export function toOwnerProject<T extends { sharePasswordHash: string | null }>(
+  project: T,
+) {
+  const { sharePasswordHash, ...rest } = project;
+  return { ...rest, sharePasswordSet: !!sharePasswordHash };
 }
 
 // Рахуються тільки активні проєкти: paused/done/archived у ліміт не входять.
@@ -89,14 +99,21 @@ export async function createProject(
 
     if (template) {
       await tx.insert(milestones).values(
-        MILESTONE_TEMPLATES[template].map((title, index) => ({
+        PROJECT_TEMPLATES[template].milestones.map((m, index) => ({
           projectId: created.id,
-          title,
+          title: m.title,
+          clientAction: m.clientAction ?? null,
           position: index + 1,
         })),
       );
     }
-    return created;
+    await recordActivity(tx, {
+      projectId: created.id,
+      type: "project_created",
+      actor: { type: "owner", id: ownerId },
+      data: { title: created.title, template: template ?? null },
+    });
+    return toOwnerProject(created);
   });
 }
 
@@ -111,9 +128,12 @@ export async function listProjectsForOwner(
       Number,
     );
 
+  // Хеш пароля порталу не вибираємо взагалі: у список він не потрапить.
+  const { sharePasswordHash, ...publicColumns } = getTableColumns(projects);
+  void sharePasswordHash;
   const rows = await db
     .select({
-      ...getTableColumns(projects),
+      ...publicColumns,
       clientName: clients.name,
       milestonesTotal: totalMilestones,
       milestonesDone: doneMilestones,
@@ -155,7 +175,7 @@ export async function getProjectDetailsForOwner(
     .orderBy(asc(milestones.position), asc(milestones.createdAt));
 
   return {
-    ...project,
+    ...toOwnerProject(project),
     clientName: client?.name ?? null,
     milestones: projectMilestones,
   };
@@ -189,17 +209,40 @@ export async function updateProject(
       .set(input)
       .where(eq(projects.id, projectId))
       .returning();
-    return updated;
+    if (input.status && input.status !== current.status) {
+      await recordActivity(tx, {
+        projectId,
+        type: "project_status_changed",
+        actor: { type: "owner", id: ownerId },
+        data: { from: current.status, to: input.status },
+      });
+    }
+    return toOwnerProject(updated);
   });
 }
 
 export async function archiveProject(projectId: string, ownerId: string) {
-  const [archived] = await db
-    .update(projects)
-    .set({ status: "archived" })
-    .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)))
-    .returning({ id: projects.id });
-  if (!archived) throw new NotFoundError("Проєкт не знайдено");
+  await db.transaction(async (tx) => {
+    const [current] = await tx
+      .select({ status: projects.status })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, ownerId)))
+      .for("update");
+    if (!current) throw new NotFoundError("Проєкт не знайдено");
+
+    await tx
+      .update(projects)
+      .set({ status: "archived" })
+      .where(eq(projects.id, projectId));
+    if (current.status !== "archived") {
+      await recordActivity(tx, {
+        projectId,
+        type: "project_status_changed",
+        actor: { type: "owner", id: ownerId },
+        data: { from: current.status, to: "archived" },
+      });
+    }
+  });
 }
 
 export async function createMilestone(
@@ -226,6 +269,13 @@ export async function createMilestone(
       .values({ ...input, projectId, position: (last ?? 0) + 1 })
       .returning();
     await touchProject(tx, projectId);
+    await recordActivity(tx, {
+      projectId,
+      type: "milestone_created",
+      actor: { type: "owner", id: ownerId },
+      milestoneId: created.id,
+      data: { title: created.title },
+    });
     return created;
   });
 }
@@ -249,29 +299,81 @@ export async function updateMilestone(
   ownerId: string,
   input: UpdateMilestoneInput,
 ) {
-  return db.transaction(async (tx) => {
+  const { updated, previousStatus } = await db.transaction(async (tx) => {
     const [row] = await tx
-      .select({ status: milestones.status })
+      .select({
+        status: milestones.status,
+        dueDate: milestones.dueDate,
+        clientAction: milestones.clientAction,
+      })
       .from(milestones)
       .innerJoin(projects, eq(projects.id, milestones.projectId))
       .where(and(eq(milestones.id, milestoneId), eq(projects.ownerId, ownerId)))
       .for("update", { of: milestones });
     if (!row) throw new NotFoundError("Етап не знайдено");
 
+    const statusChanged = !!input.status && input.status !== row.status;
+    const dueChanged =
+      input.dueDate !== undefined &&
+      (input.dueDate?.getTime() ?? null) !== (row.dueDate?.getTime() ?? null);
+    const actionChanged =
+      input.clientAction !== undefined &&
+      (input.clientAction ?? null) !== row.clientAction;
+
     // completed_at ставимо при вході в done і чистимо при виході; done -> done не чіпає.
     let completedAt: Date | null | undefined;
-    if (input.status && input.status !== row.status) {
-      completedAt = input.status === "done" ? new Date() : null;
-    }
+    if (statusChanged) completedAt = input.status === "done" ? new Date() : null;
 
     const [updated] = await tx
       .update(milestones)
-      .set({ ...input, ...(completedAt !== undefined && { completedAt }) })
+      .set({
+        ...input,
+        ...(completedAt !== undefined && { completedAt }),
+        // Нова дата: нові нагадування.
+        ...(dueChanged && { soonRemindedAt: null, overdueRemindedAt: null }),
+        // Старе рішення клієнта стосувалось попереднього стану етапу.
+        ...((statusChanged || actionChanged) && {
+          clientResponse: null,
+          clientResponseNote: null,
+          clientRespondedAt: null,
+        }),
+      })
       .where(eq(milestones.id, milestoneId))
       .returning();
     await touchProject(tx, updated.projectId);
-    return updated;
+
+    const actor = { type: "owner", id: ownerId } as const;
+    if (statusChanged) {
+      await recordActivity(tx, {
+        projectId: updated.projectId,
+        type: "milestone_status_changed",
+        actor,
+        milestoneId,
+        data: { title: updated.title, from: row.status, to: updated.status },
+      });
+    }
+    if (dueChanged) {
+      await recordActivity(tx, {
+        projectId: updated.projectId,
+        type: "milestone_due_changed",
+        actor,
+        milestoneId,
+        data: {
+          title: updated.title,
+          from: row.dueDate?.toISOString() ?? null,
+          to: updated.dueDate?.toISOString() ?? null,
+        },
+      });
+    }
+    return { updated, previousStatus: statusChanged ? row.status : null };
   });
+
+  if (previousStatus) {
+    await dispatch(() =>
+      notifyClientMilestoneStatus(milestoneId, previousStatus, updated.status),
+    );
+  }
+  return updated;
 }
 
 export async function reorderMilestones(
@@ -325,7 +427,7 @@ export async function deleteMilestone(milestoneId: string, ownerId: string) {
   await db.transaction(async (tx) => {
     // Блокуємо проєкт, щоб перенумерація не змішалась із паралельним додаванням.
     const [row] = await tx
-      .select({ projectId: milestones.projectId })
+      .select({ projectId: milestones.projectId, title: milestones.title })
       .from(milestones)
       .innerJoin(projects, eq(projects.id, milestones.projectId))
       .where(and(eq(milestones.id, milestoneId), eq(projects.ownerId, ownerId)))
@@ -334,6 +436,12 @@ export async function deleteMilestone(milestoneId: string, ownerId: string) {
 
     await tx.delete(milestones).where(eq(milestones.id, milestoneId));
     await touchProject(tx, row.projectId);
+    await recordActivity(tx, {
+      projectId: row.projectId,
+      type: "milestone_deleted",
+      actor: { type: "owner", id: ownerId },
+      data: { title: row.title },
+    });
 
     await tx.execute(sql`
       update ${milestones} m

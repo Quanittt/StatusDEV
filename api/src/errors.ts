@@ -44,3 +44,22 @@ export class PlanLimitError extends AppError {
     super(402, "PLAN_LIMIT", message);
   }
 }
+
+export class GoneError extends AppError {
+  constructor(message = "Термін дії посилання минув") {
+    super(410, "LINK_EXPIRED", message);
+  }
+}
+
+// Портал із паролем: клієнт має спершу ввести пароль (POST /portal/:token/unlock).
+export class PortalPasswordRequiredError extends AppError {
+  constructor() {
+    super(401, "PORTAL_PASSWORD_REQUIRED", "Потрібен пароль");
+  }
+}
+
+export class WrongPasswordError extends AppError {
+  constructor() {
+    super(401, "WRONG_PASSWORD", "Невірний пароль");
+  }
+}

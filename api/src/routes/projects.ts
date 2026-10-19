@@ -1,8 +1,10 @@
 import {
   CreateMilestoneSchema,
   ReorderMilestonesSchema,
+  ActivityQuerySchema,
   CreateProjectSchema,
   ProjectStatusSchema,
+  ShareSettingsSchema,
   UpdateProjectSchema,
 } from "@statusdev/shared";
 import { z } from "zod";
@@ -16,7 +18,13 @@ import {
   reorderMilestones,
   updateProject,
 } from "../services/projects.js";
-import { createShareLink, revokeShareLink } from "../services/portal.js";
+import { listActivity } from "../services/activity.js";
+import { PROJECT_TEMPLATES } from "../services/milestone-templates.js";
+import {
+  createShareLink,
+  revokeShareLink,
+  updateShareSettings,
+} from "../services/portal.js";
 
 const IdParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -28,6 +36,21 @@ export async function projectRoutes(app: FastifyInstance) {
       .object({ status: ProjectStatusSchema.optional() })
       .parse(req.query);
     return listProjectsForOwner(req.user!.id, status);
+  });
+
+  // Готові набори етапів для форми створення проєкту.
+  app.get("/project-templates", async () =>
+    Object.entries(PROJECT_TEMPLATES).map(([id, t]) => ({
+      id,
+      label: t.label,
+      milestones: t.milestones,
+    })),
+  );
+
+  app.get("/projects/:id/activity", async (req) => {
+    const { id } = IdParamsSchema.parse(req.params);
+    const query = ActivityQuerySchema.parse(req.query);
+    return listActivity(id, req.user!.id, query);
   });
 
   app.get("/projects/:id", async (req) => {
@@ -55,9 +78,20 @@ export async function projectRoutes(app: FastifyInstance) {
   });
 
   // Посилання для клієнта: повторний POST створює нове і вимикає старе.
+  // Необов'язкове тіло задає термін дії й пароль.
   app.post("/projects/:id/share", async (req, reply) => {
     const { id } = IdParamsSchema.parse(req.params);
-    return reply.status(201).send(await createShareLink(id, req.user!.id));
+    const settings = ShareSettingsSchema.parse(req.body ?? {});
+    return reply
+      .status(201)
+      .send(await createShareLink(id, req.user!.id, settings));
+  });
+
+  // Зміна терміну й пароля чинного посилання без заміни самого токена.
+  app.patch("/projects/:id/share", async (req) => {
+    const { id } = IdParamsSchema.parse(req.params);
+    const settings = ShareSettingsSchema.parse(req.body);
+    return updateShareSettings(id, req.user!.id, settings);
   });
 
   app.delete("/projects/:id/share", async (req, reply) => {

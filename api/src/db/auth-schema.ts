@@ -15,6 +15,14 @@ export const user = pgTable("user", {
   plan: text("plan").default("free"),
   brandName: text("brand_name"),
   brandColor: text("brand_color"),
+  // Логотип бренду для порталу: ключ об'єкта в R2.
+  brandLogoKey: text("brand_logo_key"),
+  // Сповіщення власнику: Telegram (chat_id після /start <код>) і вебхук.
+  telegramChatId: text("telegram_chat_id"),
+  telegramLinkCode: text("telegram_link_code"),
+  telegramLinkExpiresAt: timestamp("telegram_link_expires_at"),
+  webhookUrl: text("webhook_url"),
+  webhookSecret: text("webhook_secret"),
 });
 
 export const session = pgTable(

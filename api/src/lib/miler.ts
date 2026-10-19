@@ -12,6 +12,9 @@ export interface SendEmailParams {
 }
 
 export async function sendEmail({ to, subject, html, text, replyTo }: SendEmailParams) {
+    // Тести ніколи не шлють справжніх листів; потрібні перевірки мокають цей модуль.
+    if (env.NODE_ENV === "test") return null;
+
     const { data, error } = await resend.emails.send({
         from: env.EMAIL_FROM,
         to,

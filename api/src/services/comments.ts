@@ -3,6 +3,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { comments, milestones } from "../db/schema.js";
 import { NotFoundError } from "../errors.js";
+import { recordActivity } from "./activity.js";
 import { getProjectForOwner, touchProject } from "./projects.js";
 
 // Від старих до нових, як у чаті. Тут і коментарі клієнта, і власника.
@@ -47,6 +48,13 @@ export async function createOwnerComment(
       })
       .returning();
     await touchProject(tx, projectId);
+    await recordActivity(tx, {
+      projectId,
+      type: "comment_added",
+      actor: { type: "owner", id: ownerId },
+      milestoneId: created.milestoneId,
+      data: { preview: created.body.slice(0, 120) },
+    });
     return created;
   });
 }

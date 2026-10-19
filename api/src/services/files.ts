@@ -2,14 +2,15 @@ import { randomUUID } from "node:crypto";
 import type { CreateFileInput, PresignFileInput } from "@statusdev/shared";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { files, milestones } from "../db/schema.js";
-import { BadRequestError, NotFoundError } from "../errors.js";
+import { documents, files, milestones } from "../db/schema.js";
+import { BadRequestError, ConflictError, NotFoundError } from "../errors.js";
 import {
   deleteObject,
   headObjectSize,
   presignDownload,
   presignUpload,
 } from "../lib/storage.js";
+import { recordActivity } from "./activity.js";
 import { getProjectForOwner } from "./projects.js";
 
 const keyPrefix = (projectId: string) => `projects/${projectId}/`;
@@ -80,6 +81,13 @@ export async function registerFile(
       sizeBytes: size,
     })
     .returning();
+  await recordActivity(db, {
+    projectId,
+    type: "file_added",
+    actor: { type: "owner", id: ownerId },
+    milestoneId: created.milestoneId,
+    data: { name: created.name },
+  });
   return created;
 }
 
@@ -109,6 +117,24 @@ export async function getDownloadUrl(fileId: string, ownerId: string) {
 
 export async function deleteFile(fileId: string, ownerId: string) {
   const file = await getFileForOwner(fileId, ownerId);
+
+  // Видалення файлу каскадом прибрало б документ разом із підписом клієнта, а об'єкт в R2 зник би.
+  const [document] = await db
+    .select({ id: documents.id })
+    .from(documents)
+    .where(eq(documents.fileId, file.id));
+  if (document) {
+    throw new ConflictError(
+      "Файл використовується в документі на погодження. Спершу скасуйте запит на погодження.",
+    );
+  }
+
   await db.delete(files).where(eq(files.id, file.id));
+  await recordActivity(db, {
+    projectId: file.projectId,
+    type: "file_deleted",
+    actor: { type: "owner", id: ownerId },
+    data: { name: file.name },
+  });
   await deleteObject(file.storageKey);
 }

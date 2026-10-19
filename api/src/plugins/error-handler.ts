@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { ZodError } from "zod";
 import { AppError } from "../errors.js";
+import { captureError } from "../lib/sentry.js";
 
 export function registerErrorHandler(app: FastifyInstance) {
   app.setErrorHandler((err, req, reply) => {
@@ -28,6 +29,7 @@ export function registerErrorHandler(app: FastifyInstance) {
     }
 
     req.log.error(err);
+    captureError(err, { route: req.routeOptions?.url ?? "unknown" });
     return reply
       .status(500)
       .send({ error: { code: "INTERNAL", message: "Внутрішня помилка сервера" } });
