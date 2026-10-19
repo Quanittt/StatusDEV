@@ -1,4 +1,3 @@
-import type { ProjectTemplate } from '@statusdev/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -9,19 +8,17 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Field, Input, Select, Textarea } from '@/components/ui/input'
 import { http } from '@/lib/api'
 import { dateInputToApi } from '@/lib/format'
-import type { Client } from '@/lib/types'
-
-const TEMPLATES: { value: ProjectTemplate | ''; label: string }[] = [
-  { value: '', label: 'Без шаблону' },
-  { value: 'website', label: 'Сайт' },
-  { value: 'branding', label: 'Брендинг' },
-  { value: 'smm', label: 'SMM' },
-]
+import type { Client, ProjectTemplateInfo } from '@/lib/types'
 
 export default function NewProjectPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const clients = useQuery({ queryKey: ['clients'], queryFn: () => http.get<Client[]>('/clients') })
+  const templates = useQuery({
+    queryKey: ['project-templates'],
+    queryFn: () => http.get<ProjectTemplateInfo[]>('/project-templates'),
+    staleTime: Infinity,
+  })
   const [form, setForm] = useState({ clientId: '', title: '', description: '', deadline: '', template: '' })
 
   const create = useMutation({
@@ -38,6 +35,8 @@ export default function NewProjectPage() {
       navigate(`/projects/${p.id}`)
     },
   })
+
+  const selectedTemplate = templates.data?.find((t) => t.id === form.template)
 
   const set =
     (k: keyof typeof form) =>
@@ -87,14 +86,25 @@ export default function NewProjectPage() {
                 </Field>
                 <Field label="Шаблон етапів">
                   <Select value={form.template} onChange={set('template')}>
-                    {TEMPLATES.map((t) => (
-                      <option key={t.value} value={t.value}>
+                    <option value="">Без шаблону</option>
+                    {templates.data?.map((t) => (
+                      <option key={t.id} value={t.id}>
                         {t.label}
                       </option>
                     ))}
                   </Select>
                 </Field>
               </div>
+              {selectedTemplate && (
+                <div className="rounded-md bg-secondary/60 p-3 text-sm">
+                  <p className="mb-1 font-medium">Етапи шаблону «{selectedTemplate.label}»:</p>
+                  <ol className="list-decimal pl-5 text-muted-foreground">
+                    {selectedTemplate.milestones.map((m) => (
+                      <li key={m.title}>{m.title}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
               <ErrorText error={create.error} />
               <div className="flex gap-2">
                 <Button type="submit" disabled={create.isPending}>

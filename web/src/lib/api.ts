@@ -61,9 +61,9 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export const http = {
-  get: <T>(path: string) => api<T>(path),
-  post: <T>(path: string, data?: unknown) =>
-    api<T>(path, { method: 'POST', body: data === undefined ? undefined : JSON.stringify(data) }),
+  get: <T>(path: string, headers?: Record<string, string>) => api<T>(path, { headers }),
+  post: <T>(path: string, data?: unknown, headers?: Record<string, string>) =>
+    api<T>(path, { method: 'POST', body: data === undefined ? undefined : JSON.stringify(data), headers }),
   patch: <T>(path: string, data: unknown) =>
     api<T>(path, { method: 'PATCH', body: JSON.stringify(data) }),
   put: <T>(path: string, data: unknown) =>

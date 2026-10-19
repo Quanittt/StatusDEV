@@ -9,6 +9,7 @@ import NotFoundPage from '@/pages/NotFoundPage'
 import PortalPage from '@/pages/PortalPage'
 import ProjectPage from '@/pages/ProjectPage'
 import ProjectsPage from '@/pages/ProjectsPage'
+import SettingsPage from '@/pages/SettingsPage'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/projects/:id" element={<ProjectPage />} />
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/chat/:projectId?" element={<ChatPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

@@ -5,6 +5,8 @@ import { useParams } from 'react-router-dom'
 
 import { ErrorText } from '@/components/ErrorText'
 import { MilestonePill } from '@/components/MilestonePill'
+import { PortalDocuments } from '@/components/PortalDocuments'
+import { PortalPasswordGate } from '@/components/PortalPasswordGate'
 import { ProgressBar } from '@/components/ProgressBar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,19 +14,119 @@ import { Textarea } from '@/components/ui/input'
 import { ApiError, http } from '@/lib/api'
 import { safeBrandColor, textOn } from '@/lib/color'
 import { formatDate, timeAgo } from '@/lib/format'
-import type { PortalData } from '@/lib/types'
+import { portalHeaders } from '@/lib/portal-access'
+import type { PortalData, PortalMilestone } from '@/lib/types'
 import { PROJECT_STATUS_LABEL } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 // Портал клієнта: без входу, спершу для телефону (375 px). Текст ≥ 16 px, кнопки ≥ 44 px.
-function Shell({ color, name, children }: { color?: string | null; name?: string; children: React.ReactNode }) {
+function Shell({
+  color,
+  name,
+  logoUrl,
+  children,
+}: {
+  color?: string | null
+  name?: string
+  logoUrl?: string | null
+  children: React.ReactNode
+}) {
   const bg = safeBrandColor(color)
   return (
     <div className="min-h-screen">
       <header style={{ backgroundColor: bg, color: textOn(bg) }} className="px-6 py-4">
-        <div className="mx-auto max-w-md text-base font-semibold">{name ?? 'StatusDEV'}</div>
+        <div className="mx-auto flex max-w-md items-center gap-3 text-base font-semibold">
+          {logoUrl && <img src={logoUrl} alt="" className="h-8 max-w-24 rounded object-contain" />}
+          {name ?? 'StatusDEV'}
+        </div>
       </header>
       <main className="mx-auto flex max-w-md flex-col gap-5 px-6 pb-10 pt-6 text-base">{children}</main>
+    </div>
+  )
+}
+
+// Клієнт приймає етап або просить правки. Відповідь можна змінити, поки власник не оновив етап.
+function MilestoneResponse({ token, m }: { token: string; m: PortalMilestone }) {
+  const qc = useQueryClient()
+  const [editing, setEditing] = useState(false)
+  const [asking, setAsking] = useState(false)
+  const [note, setNote] = useState('')
+
+  const respond = useMutation({
+    mutationFn: (v: { response: 'approved' | 'changes_requested'; note?: string }) =>
+      http.post(`/portal/${token}/milestones/${m.id}/response`, v, portalHeaders(token)),
+    onSuccess: async () => {
+      setEditing(false)
+      setAsking(false)
+      setNote('')
+      await qc.invalidateQueries({ queryKey: ['portal', token] })
+    },
+  })
+
+  const answered = m.clientResponse !== null && !editing
+
+  if (answered) {
+    return (
+      <div className="flex w-full flex-col gap-1">
+        <p className={cn('text-sm font-medium', m.clientResponse === 'approved' ? 'text-success' : 'text-warning')}>
+          {m.clientResponse === 'approved' ? '✓ Ви прийняли цей етап' : 'Ви попросили правки'}
+        </p>
+        {m.clientResponse === 'changes_requested' && m.clientResponseNote && (
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{m.clientResponseNote}</p>
+        )}
+        <button
+          type="button"
+          className="min-h-11 self-start text-sm text-primary underline"
+          onClick={() => setEditing(true)}
+        >
+          Змінити відповідь
+        </button>
+      </div>
+    )
+  }
+
+  if (asking) {
+    return (
+      <form
+        className="flex w-full flex-col gap-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          respond.mutate({ response: 'changes_requested', note })
+        }}
+      >
+        <Textarea
+          required
+          autoFocus
+          maxLength={1000}
+          aria-label="Які правки потрібні"
+          placeholder="Опишіть, що змінити"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+        <ErrorText error={respond.error} />
+        <div className="flex gap-2">
+          <Button type="submit" size="lg" disabled={respond.isPending || !note.trim()}>
+            Надіслати правки
+          </Button>
+          <Button type="button" size="lg" variant="ghost" onClick={() => setAsking(false)}>
+            Скасувати
+          </Button>
+        </div>
+      </form>
+    )
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-2">
+      <div className="flex flex-wrap gap-2">
+        <Button size="lg" disabled={respond.isPending} onClick={() => respond.mutate({ response: 'approved' })}>
+          Прийнято
+        </Button>
+        <Button size="lg" variant="outline" disabled={respond.isPending} onClick={() => setAsking(true)}>
+          Потрібні правки
+        </Button>
+      </div>
+      <ErrorText error={respond.error} />
     </div>
   )
 }
@@ -52,11 +154,11 @@ export default function PortalPage() {
 
   const portal = useQuery({
     queryKey: ['portal', token],
-    queryFn: () => http.get<PortalData>(`/portal/${token}`),
+    queryFn: () => http.get<PortalData>(`/portal/${token}`, portalHeaders(token)),
   })
 
   const send = useMutation({
-    mutationFn: () => http.post(`/portal/${token}/comments`, { body }),
+    mutationFn: () => http.post(`/portal/${token}/comments`, { body }, portalHeaders(token)),
     onSuccess: async () => {
       setBody('')
       await qc.invalidateQueries({ queryKey: ['portal', token] })
@@ -71,6 +173,27 @@ export default function PortalPage() {
           <div className="h-3 rounded-full bg-secondary" />
           <div className="h-20 rounded-lg bg-secondary" />
           <div className="h-16 rounded-lg bg-secondary" />
+        </div>
+      </Shell>
+    )
+  }
+
+  // Пароль ще не вводили або токен доступу застарів (власник змінив пароль).
+  if (portal.error instanceof ApiError && portal.error.code === 'PORTAL_PASSWORD_REQUIRED') {
+    return (
+      <Shell>
+        <PortalPasswordGate token={token} onUnlocked={() => void portal.refetch()} />
+      </Shell>
+    )
+  }
+
+  if (portal.error instanceof ApiError && portal.error.status === 410) {
+    return (
+      <Shell>
+        <div className="flex flex-col items-center gap-3 pt-10 text-center">
+          <span className="grid size-16 place-items-center rounded-full bg-error-bg text-3xl font-bold text-destructive">!</span>
+          <h1 className="text-2xl font-semibold">Термін дії посилання минув</h1>
+          <p className="text-muted-foreground">Попросіть власника проєкту надіслати нове посилання.</p>
         </div>
       </Shell>
     )
@@ -101,10 +224,10 @@ export default function PortalPage() {
   }
 
   const p = portal.data
-  const actions = p.milestones.filter((m) => m.status !== 'done' && m.clientAction)
+  const actions = p.milestones.filter((m) => m.status !== 'done' && m.clientAction && m.clientResponse !== 'approved')
 
   return (
-    <Shell color={p.owner.color} name={p.owner.name}>
+    <Shell color={p.owner.color} name={p.owner.name} logoUrl={p.owner.logoUrl}>
       <section className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold">{p.title}</h1>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -139,6 +262,8 @@ export default function PortalPage() {
         </section>
       )}
 
+      <PortalDocuments token={token} documents={p.documents} />
+
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Етапи</h2>
         {p.milestones.length === 0 && (
@@ -154,6 +279,7 @@ export default function PortalPage() {
             {m.dueDate && m.status !== 'done' && (
               <p className="text-sm text-muted-foreground">до {formatDate(m.dueDate)}</p>
             )}
+            {m.canRespond && <MilestoneResponse token={token} m={m} />}
           </div>
         ))}
       </section>
@@ -194,6 +320,9 @@ export default function PortalPage() {
         </form>
       </section>
 
+      {p.expiresAt && (
+        <p className="text-center text-xs text-muted-foreground">Посилання діє до {formatDate(p.expiresAt)}</p>
+      )}
       <p className="text-center text-xs text-muted-foreground">Зроблено на StatusDEV</p>
     </Shell>
   )

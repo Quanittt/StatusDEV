@@ -4,18 +4,22 @@ import { ArrowLeft, CalendarDays, Check, Copy, ExternalLink, Trash2 } from 'luci
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
+import { DocumentsSection } from '@/components/DocumentsSection'
 import { ErrorText } from '@/components/ErrorText'
 import { ProgressBar } from '@/components/ProgressBar'
 import { ProjectStatusBadge } from '@/components/ProjectStatusBadge'
+import { ShareSettings } from '@/components/ShareSettings'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input, Select, Textarea } from '@/components/ui/input'
 import { http } from '@/lib/api'
+import { activityActor, describeActivity } from '@/lib/activity'
 import { dateInputToApi, formatDate, timeAgo } from '@/lib/format'
 import { MILESTONE_STYLE } from '@/lib/milestone-style'
 import {
   MILESTONE_STATUS_LABEL,
   PROJECT_STATUS_LABEL,
+  type ActivityEvent,
   type Comment,
   type Milestone,
   type ProjectDetails,
@@ -62,6 +66,7 @@ function ShareBlock({ project, onChanged }: { project: ProjectDetails; onChanged
               </a>
             </Button>
           </div>
+          <ShareSettings project={project} onChanged={onChanged} />
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
@@ -141,8 +146,47 @@ function MilestoneRow({ m, onChanged }: { m: Milestone; onChanged: () => void })
           <b>Потрібно від клієнта:</b> {m.clientAction}
         </p>
       )}
+      {m.clientResponse === 'approved' && (
+        <p className="ml-1 text-sm text-success">✓ Клієнт прийняв етап · {timeAgo(m.clientRespondedAt ?? '')}</p>
+      )}
+      {m.clientResponse === 'changes_requested' && (
+        <p className="ml-1 rounded-md bg-warning-bg px-3 py-1.5 text-sm text-warning">
+          <b>Клієнт просить правки:</b> {m.clientResponseNote}
+        </p>
+      )}
       <ErrorText error={update.error ?? remove.error} />
     </li>
+  )
+}
+
+// Історія змін проєкту: хто що зробив і коли. Власник і клієнт в одній стрічці.
+function ActivitySection({ projectId }: { projectId: string }) {
+  const activity = useQuery({
+    queryKey: ['activity', projectId],
+    queryFn: () => http.get<ActivityEvent[]>(`/projects/${projectId}/activity?limit=30`),
+  })
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-border bg-card">
+      <h2 className="border-b border-border bg-secondary/60 px-4 py-3 font-semibold">Історія</h2>
+      {activity.isError && (
+        <div className="p-4">
+          <ErrorText error={activity.error} />
+        </div>
+      )}
+      {activity.data?.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">Подій ще немає.</p>}
+      <ul className="divide-y divide-border">
+        {activity.data?.map((e) => (
+          <li key={e.id} className="flex flex-col gap-0.5 px-4 py-2.5 text-sm">
+            <span>
+              <b className={e.actorType === 'client' ? 'text-primary' : undefined}>{activityActor(e)}</b>{' '}
+              {describeActivity(e)}
+            </span>
+            <span className="text-xs text-muted-foreground">{timeAgo(e.createdAt)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -159,6 +203,7 @@ export default function ProjectPage() {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: key })
     qc.invalidateQueries({ queryKey: ['projects'] })
+    qc.invalidateQueries({ queryKey: ['activity', id] })
   }
 
   const setStatus = useMutation({
@@ -186,6 +231,7 @@ export default function ProjectPage() {
     onSuccess: () => {
       setBody('')
       qc.invalidateQueries({ queryKey: ['comments', id] })
+      qc.invalidateQueries({ queryKey: ['activity', id] })
     },
   })
 
@@ -288,6 +334,10 @@ export default function ProjectPage() {
               </Button>
             </form>
           </section>
+
+          <DocumentsSection projectId={id} onChanged={refresh} />
+
+          <ActivitySection projectId={id} />
         </div>
 
         <aside className="flex h-fit flex-col gap-4 rounded-lg border border-border bg-card p-4 text-sm">
