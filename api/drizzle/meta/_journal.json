@@ -43,6 +43,13 @@
       "when": 1791990184471,
       "tag": "0005_yielding_shen",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792408623112,
+      "tag": "0006_chat",
+      "breakpoints": true
     }
   ]
 }

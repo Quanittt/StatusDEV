@@ -5,5 +5,8 @@ export default defineConfig({
   dialect: "postgresql",
   schema: "./src/db/schema.ts",
   out: "./drizzle",
-  dbCredentials: { url: process.env.DATABASE_URL! },
+  // Міграції йдуть від окремої ролі, яка може міняти структуру; застосунок (DATABASE_URL) не може.
+  dbCredentials: {
+    url: (process.env.MIGRATE_DATABASE_URL ?? process.env.DATABASE_URL)!,
+  },
 });

@@ -21,6 +21,12 @@ export class UnauthorizedError extends AppError {
   }
 }
 
+export class ForbiddenError extends AppError {
+  constructor(message = "Недостатньо прав") {
+    super(403, "FORBIDDEN", message);
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(message = "Не знайдено") {
     super(404, "NOT_FOUND", message);

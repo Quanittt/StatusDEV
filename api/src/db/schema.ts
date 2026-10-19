@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   index,
   integer,
+  primaryKey,
   pgEnum,
   pgTable,
   text,
@@ -147,6 +148,54 @@ export const files = pgTable(
   (t) => [
     index("files_project_id_idx").on(t.projectId),
     index("files_milestone_id_idx").on(t.milestoneId),
+  ],
+);
+
+export const memberRole = pgEnum("member_role", ["pm", "junior"]);
+
+// Власник проєкту береться з projects.owner_id; тут лише PM і джуни, яких він додав.
+export const projectMembers = pgTable(
+  "project_members",
+  {
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: memberRole("role").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.projectId, t.userId] }),
+    index("project_members_user_id_idx").on(t.userId),
+  ],
+);
+
+// Особисті повідомлення двох учасників проєкту. Хто кому може писати, вирішує canChat().
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    senderId: text("sender_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    recipientId: text("recipient_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("chat_messages_pair_idx").on(
+      t.projectId,
+      t.senderId,
+      t.recipientId,
+      t.createdAt,
+    ),
   ],
 );
 

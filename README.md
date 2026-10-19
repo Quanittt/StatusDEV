@@ -77,6 +77,23 @@ erDiagram
 
 Що ще не вирішено (для обговорення з напарником): обмеження частоти коментарів із порталу (публічний запис без захисту від спаму); де власник задає `brand_name` і `brand_color` (поля є, інтерфейсу немає).
 
+## Чат команди (owner / PM / junior)
+
+Власник проєкту додає зареєстрованих користувачів як `pm` або `junior` (`POST /projects/:id/members`). Листуватись можуть лише пари **owner↔pm** і **pm↔junior**; owner і junior напряму не спілкуються. Правило одне на весь код: `canChat()` у `api/src/services/chat.ts`.
+
+- Чужий проєкт і не-учасник дають 404, заборонена пара дає 403.
+- Переписку бачать тільки двоє її учасників: owner не бачить розмову PM із джуном.
+- Відправник береться з сесії, не з тіла запиту. Ліміт: 30 повідомлень за хвилину.
+- API: `GET/POST/DELETE /projects/:id/members`, `GET /projects/:id/chat/contacts`, `GET/POST /projects/:id/chat/:userId/messages` (`?after=<id>&limit=` для опитування).
+
+## Безпека і ролі розробників
+
+Щоб людина, яка робить лише frontend, не могла змінити API чи базу:
+
+1. **База.** `docker compose` створює (на чистому томі) дві ролі: `statusdev_app` (лише SELECT/INSERT/UPDATE/DELETE, без права міняти структуру) і `statusdev_migrator` (міграції). Порт Postgres відкритий тільки на `127.0.0.1`. Frontend-розробнику паролі бази не потрібні: для роботи з `web/` досить URL запущеного API. У `api/.env` задай `DATABASE_URL` від `statusdev_app`, а `MIGRATE_DATABASE_URL` від `statusdev_migrator`. Якщо том уже існує, скрипт `docker/postgres/init-roles.sh` не запуститься: або `docker compose down -v` (видалить дані!), або виконай його SQL вручну.
+2. **Код.** `.github/CODEOWNERS` віддає `api/`, `shared/`, `docker/` і `.github/` власнику: зміни там потребують його схвалення. Це працює лише після налаштування в GitHub: *Settings → Branches → Rule для `main`* → Require a pull request before merging + Require review from Code Owners (і Require status checks: CI). Без цього правила пряний `git push` у `main` дозволений усім із write-доступом.
+3. **Доступ.** Frontend-розробнику давай роль Write без права адміністрування репозиторію, секрети (`api/.env`, ключі R2, Resend) йому не передавай. Секрети продакшну лежать лише на сервері.
+
 ## Bruno-колекція запитів
 
 У `bruno/StatusDEV/` лежить колекція для [Bruno](https://www.usebruno.com/): відкрий її (Open Collection), вибери оточення `local` і запускай запити. Спершу `auth/Sign up` (або `Sign in`), далі решта — Bruno зберігає cookie сесії сам. `Create client` і `Create project` записують `clientId` та `projectId` у змінні, тож наступні запити працюють одним кліком.

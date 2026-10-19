@@ -6,6 +6,7 @@ import { env } from "./env.js";
 import { registerErrorHandler } from "./plugins/error-handler.js";
 import { requireOwnerPlugin } from "./plugins/require-owner.js";
 import { authRoutes } from "./routes/auth.js";
+import { chatRoutes } from "./routes/chat.js";
 import { clientRoutes } from "./routes/clients.js";
 import { commentRoutes } from "./routes/comments.js";
 import { fileRoutes } from "./routes/files.js";
@@ -52,6 +53,7 @@ export function buildApp({ logger = true }: { logger?: boolean } = {}) {
   app.register(milestoneRoutes);
   app.register(commentRoutes);
   app.register(fileRoutes);
+  app.register(chatRoutes);
   app.register(portalRoutes);
 
   app.get("/health", async (req, reply) => {

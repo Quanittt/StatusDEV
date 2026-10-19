@@ -117,3 +117,14 @@ export const UpdateProfileSchema = z
     message: "Потрібно передати хоча б одне поле",
   });
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
+
+export const MemberRoleSchema = z.enum(["pm", "junior"]);
+export const AddMemberSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(320),
+  role: MemberRoleSchema,
+});
+export const SendMessageSchema = z.object({ body: trimmed(2000) });
+
+export type MemberRole = z.infer<typeof MemberRoleSchema>;
+export type AddMemberInput = z.infer<typeof AddMemberSchema>;
+export type SendMessageInput = z.infer<typeof SendMessageSchema>;
