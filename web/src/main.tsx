@@ -5,6 +5,10 @@ import { BrowserRouter } from 'react-router-dom'
 
 import App from './App.tsx'
 import './index.css'
+import { applyTheme, getStoredTheme } from './lib/theme.ts'
+
+// Збережений варіант дизайну (лише dev), щоб не блимала стандартна тема.
+if (import.meta.env.DEV) applyTheme(getStoredTheme())
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
