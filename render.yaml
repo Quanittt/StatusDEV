@@ -1,0 +1,53 @@
+# ── Render: альтернативний деплой API ──
+#
+# render.yaml — Infrastructure as Code для Render.
+# При підключенні репозиторію Render автоматично деплоїть при пуші в main.
+#
+# Крок 1: Підключіть репо на https://dashboard.render.com
+# Крок 2: Render побачить цей файл і створить сервіс + базу автоматично
+# Крок 3: Додайте змінні середовища (R2, Resend, Telegram, Sentry — за потреби)
+
+services:
+  - type: web
+    name: statusdev-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: frankfurt     # EU — ближче до України
+    plan: starter         # $7/міс, або free якщо хочете
+    branch: main          # автодеплой з main
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: statusdev-db
+          property: connectionString
+      - key: BETTER_AUTH_SECRET
+        generateValue: true    # Render згенерує автоматично
+      - key: WEB_URL
+        sync: false            # встановіть вручну після деплою фронтенда
+      - key: API_URL
+        sync: false            # Render URL (напр. https://statusdev-api.onrender.com)
+      - key: RESEND_API_KEY
+        sync: false            # додайте вручну
+      - key: EMAIL_FROM
+        sync: false            # додайте вручну
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+
+databases:
+  - name: statusdev-db
+    plan: starter           # $7/міс, або free
+    databaseName: statusdev
+    region: frankfurt

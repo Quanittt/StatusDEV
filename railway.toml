@@ -1,0 +1,18 @@
+# ── Railway / Render: автодеплой API з Postgres ──
+#
+# Ця конфігурація Railway розгортає сервіс API та керовану Postgres.
+# Railway автоматично деплоїть з main при кожному пуші.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "/app/docker-entrypoint.sh"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+
+[[services]]
+name = "api"

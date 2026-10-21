@@ -1,0 +1,54 @@
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ─── Варіант A: Railway ───
+      # Розкоментуйте цей блок, якщо використовуєте Railway.
+      # Додайте RAILWAY_TOKEN в GitHub → Settings → Secrets → Actions.
+      #
+      # - name: Deploy to Railway
+      #   uses: bervProject/railway-deploy@main
+      #   with:
+      #     railway_token: ${{ secrets.RAILWAY_TOKEN }}
+      #     service: statusdev-api
+
+      # ─── Варіант B: Render ───
+      # Render деплоїть автоматично через вебхук або підключення до GitHub.
+      # Якщо хочете тригерити вручну — розкоментуйте:
+      #
+      # - name: Trigger Render deploy
+      #   run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+      # ─── Smoke-test: перевіряємо /health ───
+      - name: Wait for deployment
+        run: sleep 60
+
+      - name: Health check
+        if: ${{ vars.API_PUBLIC_URL != '' }}
+        run: |
+          echo "Checking ${{ vars.API_PUBLIC_URL }}/health ..."
+          for i in $(seq 1 10); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.API_PUBLIC_URL }}/health" || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ /health responded 200 OK"
+              curl -s "${{ vars.API_PUBLIC_URL }}/health" | head -c 200
+              echo ""
+              exit 0
+            fi
+            echo "  attempt $i: HTTP $STATUS — retrying in 15s…"
+            sleep 15
+          done
+          echo "❌ /health did not respond 200 after 10 attempts"
+          exit 1
